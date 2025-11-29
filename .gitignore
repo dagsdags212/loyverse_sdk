@@ -1,0 +1,19 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Misc. scripts
+main.py
+
+# Command runners
+justfile
+Makefile
+
+# Virtual environments
+.venv
+.env
+*.sqlite
