@@ -1,185 +1,158 @@
+from typing import Hashable, Any
 from datetime import datetime
-from typing import Optional
 import httpx
-from pydantic import BaseModel
+from pydantic._internal._model_construction import ModelMetaclass
+from pydantic import ValidationError
 from loyverse_api.core.config import config
 from loyverse_api.core.console import console
+from loyverse_api.api._endpoint import BaseEndpoint
 
 
-class Endpoint(BaseModel):
-    endpoint: str
-    base_url: str
-    api_key: Optional[str] = None
-    headers: dict = {}
-    params: dict = {"limit": config.limit}
-    data: dict = {}
-
-    def __init__(self, **kwargs) -> None:
-        super().__init__(**kwargs)
-        if self.api_key is None:
-            raise Exception(
-                "API key not found, provide it as an named parameter or in a .env file"
-            )
-
-        self.headers["Authorization"] = f"Bearer {self.api_key}"
-
-    @property
-    def url(self) -> str:
-        return f"{self.base_url}/{self.endpoint}"
-
-    def set_limit(self, limit: int, debug: bool = False) -> None:
-        assert limit > 0, "limit should be a positive integer"
-        if debug:
-            console.log(f"limit set to {limit}")
-        self.params["limit"] = limit
-
-
-class LoyverseEndpoint(Endpoint):
+class LoyverseEndpoint(BaseEndpoint):
     base_url: str = "https://api.loyverse.com/v1.0"
     api_key: str = config.loyverse_api_key
 
-    def _get(self, cursor: str | None = None) -> tuple[dict, str | None] | None:
-        if self.api_key is None:
-            raise ValueError("API key not provided")
+    def __init__(self, model: ModelMetaclass | None = None, **kwargs):
+        super().__init__(**kwargs)
+        self._model = model
 
-        if cursor:
-            self.params["cursor"] = cursor
+    # Only update this for logic in model instantiation
+    def _validate_json(
+        self, data: dict[Hashable, Any]
+    ) -> ModelMetaclass | dict[Hashable, Any]:
+        """Validate JSON data and instantiate into a pydantic model.
+        If an invalid pydantic model is passed, return the raw data"""
+        if self._model is None:
+            return data
+
+        if not isinstance(self._model, ModelMetaclass):
+            raise TypeError("not a valid pydantic model")
 
         try:
-            resp = httpx.get(self.url, params=self.params, headers=self.headers)
-            resp.raise_for_status()
-            data = resp.json()
-
-            return data.get(self.endpoint, []), data.get("cursor")
-
-        except httpx.HTTPStatusError as exc:
-            console.print(
-                f"Error response {exc.response.status_code} while requesting {exc.request.url!r}"
-            )
-            return
+            m = self._model.model_validate(data)
+            return m
+        except ValidationError:
+            if self.debug:
+                console.log(
+                    f"data (with {len(data)} keys) does not matche model schema"
+                )
+            return data
 
     def fetch_by_id(self, id: str) -> dict | None:
         """Retrieve a single record from an ID"""
         try:
             url = f"{self.url}/{id}"
+            if self.debug:
+                console.log(f"Sending a GET request to '{url}'")
             resp = httpx.get(url, params={}, headers=self.headers)
             resp.raise_for_status()
-
-            return resp.json()
+            data = resp.json()
+            return self._validate_json(data)
 
         except httpx.HTTPStatusError as exc:
-            console.print(
+            console.log(
                 f"Error response {exc.response.status_code} while requesting {exc.request.url!r}"
             )
             return
 
     # TODO: support printing to stdout, redirect output to file
-    def fetch_all(self, limit: int = None, debug: bool = False) -> list[dict[str, any]]:
+    def fetch_all(
+        self,
+        limit: int = None,
+    ) -> list[dict[str, any]]:
         """Recursively call a loyverse endpoint to retrieve all records"""
         limit = self.params.get("limit", 50)
         page = 1
-        records = []
+        records: list[dict] | list[ModelMetaclass] = []
 
-        data, cursor = self._get()
-        records.extend([record for record in data])
+        data, cursor = self.get()
+        records.extend([self._validate_json(record) for record in data])
 
-        if debug:
+        if self.debug:
             console.log(
                 f"Retrieving records from '/{self.endpoint}' endpoint ({page} - {len(records)})"
             )
 
         while cursor:
             page += 1
-            data, cursor = self._get(cursor=cursor)
-            records.extend([record for record in data])
+            data, cursor = self.get(cursor=cursor)
+            records.extend([self._validate_json(record) for record in data])
 
-            if debug:
-                print(
+            if self.debug:
+                console.log(
                     f"Retrieving records from '/{self.endpoint}' endpoint ({(page - 1) * limit + 1} - {len(records)})"
                 )
 
-        if debug:
+        if self.debug:
             console.log(f"Successfully retrieved {len(records)} records")
 
         return records
 
-    def fetch_most_recent(
-        self, n: int = 50, debug: bool = False
-    ) -> list[dict[str, any]]:
+    def fetch_most_recent(self, n: int = 50) -> list[dict[str, any]]:
         """Retrieve the n most recent records"""
         limit = 250 if n >= 250 else n
         self.params["limit"] = limit
         page = 1
         records = []
 
-        data, cursor = self._get()
-        records.extend([record for record in data])
+        data, cursor = self.get()
+        records.extend([self._validate_json(record) for record in data])
 
         if len(records) > n:
             return records[:n]
 
-        if debug:
+        if self.debug:
             console.log(
                 f"Retrieving records from '/{self.endpoint}' endpoint ({page} - {len(records)})"
             )
 
         while cursor:
             page += 1
-            data, cursor = self._get(cursor=cursor)
-            records.extend([record for record in data])
+            data, cursor = self.get(cursor=cursor)
+            records.extend([self._validate_json(record) for record in data])
 
             if len(records) > n:
                 return records[:n]
 
-            if debug:
+            if self.debug:
                 console.log(
                     f"Retrieving records from '/{self.endpoint}' endpoint ({(page - 1) * limit + 1} - {len(records)})"
                 )
 
-        if debug:
+        if self.debug:
             console.log(f"Successfully retrieved {len(records)} records")
 
         return records
 
-    def fetch_after_dt(self, dt: datetime, debug: bool = False):
+    def _validate_dt(self, dt: datetime) -> str:
+        """Parses a datetme format and converts to ISO 8601 format"""
+        assert isinstance(dt, datetime), "dt must be a datetime object"
+        dt = dt.isoformat(sep="T", timespec="milliseconds") + "Z"
+        return dt
+
+    def fetch_after_dt(self, dt: datetime):
         """Retrieve all records created AFTER the specified datetime"""
-        assert isinstance(dt, datetime), "dt must be a datetime object"
-        self.params["created_at_min"] = dt.isoformat() + ".000Z"
-        records = self.fetch_all(debug=debug)
+        self.params["created_at_min"] = self._validate_dt(dt)
+        self.params["created_at_max"] = None
+        records = self.fetch_all()
         return records
 
-    def fetch_before_dt(self, dt: datetime, debug: bool = False):
+    def fetch_before_dt(self, dt: datetime):
         """Retrieve all records created BEFORE the specified datetime"""
-        assert isinstance(dt, datetime), "dt must be a datetime object"
-        self.params["created_at_max"] = dt.isoformat() + ".000Z"
-        records = self.fetch_all(debug=debug)
+        self.params["created_at_min"] = None
+        self.params["created_at_max"] = self._validate_dt(dt)
+        records = self.fetch_all()
         return records
 
-    def fetch_between_dt(self, start: datetime, end: datetime, debug: bool = False):
+    def fetch_between_dt(
+        self,
+        start: datetime,
+        end: datetime,
+    ):
         """Retrieve all records created BEFORE the specified datetime"""
-        assert isinstance(start, datetime), "start must be a datetime object"
-        assert isinstance(end, datetime), "start must be a datetime object"
-        self.params["created_at_min"] = start.isoformat() + ".000Z"
-        self.params["created_at_max"] = end.isoformat() + ".000Z"
-        records = self.fetch_all(debug=debug)
+        assert end >= start, "end date must be greater than start date"
+
+        self.params["created_at_min"] = self._validate_dt(start)
+        self.params["created_at_max"] = self._validate_dt(end)
+        records = self.fetch_all()
         return records
-
-
-class LoyverseEndpoints:
-    """Entry point for accessing all Loyverse endpoints"""
-
-    # CATEGORIES = LoyverseEndpoint(endpoint="categories")
-    CUSTOMERS = LoyverseEndpoint(endpoint="customers")
-    DISCOUNTS = LoyverseEndpoint(endpoint="discounts")
-    EMPLOYEES = LoyverseEndpoint(endpoint="employees")
-    INVENTORY = LoyverseEndpoint(endpoint="inventory")
-    ITEMS = LoyverseEndpoint(endpoint="items")
-    PAYMENT_TYPES = LoyverseEndpoint(endpoint="payment_types")
-    POS_DEVICES = LoyverseEndpoint(endpoint="pos_devices")
-    RECEIPTS = LoyverseEndpoint(endpoint="receipts")
-    STORES = LoyverseEndpoint(endpoint="stores")
-    # SHIFTS = LoyverseEndpoint(endpoint="shifts")
-    # SUPPLIERS = LoyverseEndpoint(endpoint="suppliers")
-    # TAXES = LoyverseEndpoint(endpoint="taxes")
-    # WEBHOOKS = LoyverseEndpoint(endpoint="webhooks")
-    # VARIANTS = LoyverseEndpoint(endpoint="variants")
