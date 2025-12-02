@@ -1,7 +1,7 @@
 [project]
 name = "loyverse-api"
 version = "0.1.0"
-description = "Add your description here"
+description = "Asynchronous Python SDK for the Loyverse API"
 readme = "README.md"
 authors = [
     { name = "dagsdags212", email = "jegsamson.dev@gmail.com" } 
@@ -11,13 +11,34 @@ dependencies = [
     "pydantic>=2.12.4",
     "pydantic-settings>=2.12.0",
     "httpx>=0.28.1",
-    "pytest>=9.0.1",
     "sqlmodel>=0.0.27",
     "rich>=14.2.0",
 ]
 
+[tool.uv]
+dev-dependencies = [
+    "anyio>=4.11.0",
+    "pytest>=9.0.1",
+    "pytest-mock>=3.15.1",
+    "respx>=0.22.0",
+]
+
 [tool.pytest.ini_options]
+minversion = "9.0"
 pythonpath = ["."]
+
+testpaths = [
+    "tests",
+]
+
+markers = [
+    "integration: marks integration tests",
+    "unit: marks unit tests"
+]
+
+filterwarnings = [
+    "ignore::DeprecationWarning"
+]
 
 [project.scripts]
 loyverse-api = "loyverse_api:main"
