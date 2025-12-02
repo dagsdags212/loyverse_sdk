@@ -6,10 +6,10 @@ load_dotenv()
 
 
 class Config(BaseSettings):
-    loyverse_api_key: str
-    db_url: str
-    limit: int = 50
-    timezone: str = "Asia/Manila"
+    BASE_URL: str = "https://api.loyverse.com/v1.0"
+    LOYVERSE_API_TOKEN: str
+    PAGE_LIMIT: int = 50
+    TIMEZONE: str = "Asia/Manila"
 
 
 config = Config()
