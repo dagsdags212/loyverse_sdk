@@ -1,5 +1,5 @@
 from pydantic import Field, field_validator
-from loyverse_api.models.common import Base, Pagination
+from loyverse_sdk.models.common import Base, Pagination
 
 
 class Store(Base):

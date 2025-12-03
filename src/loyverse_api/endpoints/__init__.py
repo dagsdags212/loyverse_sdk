@@ -1,7 +1,0 @@
-from loyverse_api.endpoints.customers import CustomersEndpoint
-from loyverse_api.endpoints.discounts import DiscountsEndpoint
-from loyverse_api.endpoints.devices import PosDevicesEndpoints
-from loyverse_api.endpoints.employees import EmployeesEndpoint
-from loyverse_api.endpoints.receipts import ReceiptsEndpoint
-from loyverse_api.endpoints.stores import StoresEndpoint
-from loyverse_api.endpoints.categories import CategoriesEndpoint

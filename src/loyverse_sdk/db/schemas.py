@@ -1,8 +1,8 @@
 from uuid import UUID, uuid4
 from sqlmodel import Field, SQLModel, Relationship
 from sqlmodel import create_engine
-from loyverse_api import models
-from loyverse_api.core.config import config
+from loyverse_sdk import models
+from loyverse_sdk.core.config import config
 
 
 class Employee(SQLModel, models.Employee, table=True):

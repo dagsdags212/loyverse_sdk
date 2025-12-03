@@ -1,4 +1,4 @@
-from loyverse_api.core.config import config
+from loyverse_sdk.core.config import config
 
 
 class Auth:

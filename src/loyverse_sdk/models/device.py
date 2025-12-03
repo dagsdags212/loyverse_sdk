@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 from pydantic import BaseModel, Field
-from loyverse_api.models.common import Pagination
+from loyverse_sdk.models.common import Pagination
 
 
 class PosDevice(BaseModel):

@@ -1,7 +1,7 @@
 from typing import Self
 from uuid import UUID
 from pydantic import Field, model_validator
-from loyverse_api.models.common import Base, Pagination
+from loyverse_sdk.models.common import Base, Pagination
 
 
 class Item(Base):

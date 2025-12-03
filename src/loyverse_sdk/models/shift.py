@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Iterable, Tuple, Literal
 from pydantic import BaseModel, Field
 from pydantic import NonNegativeFloat
-from loyverse_api.models.common import Base, Pagination
+from loyverse_sdk.models.common import Base, Pagination
 
 
 class CashMovement(BaseModel):

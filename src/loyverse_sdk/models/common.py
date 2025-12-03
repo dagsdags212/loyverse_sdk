@@ -2,7 +2,7 @@ from uuid import uuid4, UUID
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from pydantic import BaseModel, Field, field_validator
-from loyverse_api.core.config import config
+from loyverse_sdk.core.config import config
 
 
 class Base(BaseModel):

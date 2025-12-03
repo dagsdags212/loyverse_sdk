@@ -1,7 +1,7 @@
 from typing import AsyncGenerator, Type, TypeVar, Generic
 from pydantic import BaseModel
 from pydantic import ValidationError
-from loyverse_api.core.console import console
+from loyverse_sdk.core.console import console
 
 
 T = TypeVar("T")

@@ -1,11 +1,11 @@
 from typing import Iterable
-from loyverse_api.endpoints.base import BaseEndpoint
-from loyverse_api.endpoints.mixins import (
+from loyverse_sdk.endpoints.base import BaseEndpoint
+from loyverse_sdk.endpoints.mixins import (
     CrudMixin,
     ListMixin,
     PaginationMixin,
 )
-from loyverse_api.models import Category, CategoryListResponse
+from loyverse_sdk.models import Category, CategoryListResponse
 
 
 class CategoriesEndpoint(BaseEndpoint, ListMixin, CrudMixin, PaginationMixin):

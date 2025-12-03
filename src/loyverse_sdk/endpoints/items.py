@@ -1,10 +1,10 @@
-from loyverse_api.endpoints.base import BaseEndpoint
-from loyverse_api.endpoints.mixins import (
+from loyverse_sdk.endpoints.base import BaseEndpoint
+from loyverse_sdk.endpoints.mixins import (
     ListMixin,
     RetrieveMixin,
     PaginationMixin,
 )
-from loyverse_api.models import Item, ItemListResponse
+from loyverse_sdk.models import Item, ItemListResponse
 
 
 class ItemsEndpoint(BaseEndpoint, ListMixin, RetrieveMixin, PaginationMixin):

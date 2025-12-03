@@ -2,7 +2,7 @@ import re
 from uuid import UUID
 from datetime import datetime, timedelta
 from pydantic import Field, field_validator
-from loyverse_api.models.common import Base, Pagination
+from loyverse_sdk.models.common import Base, Pagination
 
 
 class User(Base):

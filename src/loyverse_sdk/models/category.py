@@ -2,7 +2,7 @@ from uuid import UUID, uuid4
 from datetime import datetime
 from enum import Enum, unique
 from pydantic import BaseModel, Field, field_validator
-from loyverse_api.models.common import Pagination
+from loyverse_sdk.models.common import Pagination
 
 
 @unique

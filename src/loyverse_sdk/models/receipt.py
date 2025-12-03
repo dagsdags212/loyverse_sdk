@@ -2,7 +2,7 @@ from uuid import UUID
 from datetime import datetime
 from pydantic import Field, field_validator
 from pydantic import NonNegativeFloat
-from loyverse_api.models.common import Base, Pagination
+from loyverse_sdk.models.common import Base, Pagination
 
 
 class PaymentType(Base):

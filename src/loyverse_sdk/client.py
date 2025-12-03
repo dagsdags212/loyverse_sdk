@@ -1,8 +1,8 @@
 import httpx
-from loyverse_api.auth import Auth
-from loyverse_api.core.config import config
-from loyverse_api.exceptions import APIError
-from loyverse_api.endpoints import (
+from loyverse_sdk.auth import Auth
+from loyverse_sdk.core.config import config
+from loyverse_sdk.exceptions import APIError
+from loyverse_sdk.endpoints import (
     CustomersEndpoint,
     DiscountsEndpoint,
     EmployeesEndpoint,
