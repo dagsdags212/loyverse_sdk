@@ -1,14 +1,14 @@
-# Loyverse API
+# Loyverse SDK
 
 Asynchronous Python SDK for interacting with the Loyverse API
 
 ## Installation
 
-The package utilizes `uv` for local installation.
+Use `uv` or `pip` to install the package from this git repository.
 
 ```
-git clone https://github.com/dagsdags212/loyverse_api.git
-uv install loyverse_api
+uv init
+uv pip install git+https://github.com/dagsdags212/loyverse_sdk.git
 ```
 
 ## Setup
@@ -35,7 +35,7 @@ os.environ["LOYVERSE_API_KEY"] = "your_api_key"
 
 Create an instance of the `LoyverseClient` to send asynchronous requests to the Loyverse RESTFUL API.
 ```python
-from loyverse_api import LoyverseClient
+from loyverse_sdk import LoyverseClient
 
 client = LoyverseClient(api_token=YOUR_API_TOKEN)
 
@@ -54,7 +54,7 @@ LOYVERSE_API_TOKEN=your_api_token
 
 This will be loaded by a `config` object which can be used to create the client.
 ```python
-from loyverse_api.core.config import config
+from loyverse_sdk.core.config import config
 
 client = LoyverseClient(api_token=config.LOYVERSE_API_TOKEN)
 ```
