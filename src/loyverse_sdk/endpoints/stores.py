@@ -7,7 +7,7 @@ from loyverse_sdk.endpoints.mixins import (
 from loyverse_sdk.models import Store, StoreListResponse
 
 
-class StoresEndpoint(BaseEndpoint, ListMixin, RetrieveMixin):
+class StoresEndpoint(BaseEndpoint, ListMixin, RetrieveMixin, PaginationMixin):
     path = "stores"
 
     async def list(self, limit: int = 100, cursor: str | None = None):

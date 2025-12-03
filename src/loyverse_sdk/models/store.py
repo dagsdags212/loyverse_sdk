@@ -1,21 +1,16 @@
-from pydantic import Field, field_validator
+from pydantic import Field
 from loyverse_sdk.models.common import Base, Pagination
 
 
 class Store(Base):
-    name: str
-    address: str
-    city: str | None = None
-    state: str | None = None
-    postal_code: str | None = None
-    country: str = Field(default="PH")
-
-    @field_validator("country", mode="after")
-    @classmethod
-    def check_country_code_format(cls, value: str) -> str:
-        if len(value) != 2:
-            raise ValueError("country must be a two-letter code")
-        return value
+    name: str = Field(max_length=40)
+    address: str | None = Field(default=None, max_length=255)
+    city: str | None = Field(default=None, max_length=64)
+    state: str | None = Field(default=None, max_length=64)
+    postal_code: str | None = Field(default=None, max_length=20)
+    country: str | None = Field(default=None, max_length=2)
+    phone_number: str | None = Field(default=None, max_length=15)
+    description: str | None = Field(default=None, max_length=128)
 
 
 class StoreListResponse(Pagination):
