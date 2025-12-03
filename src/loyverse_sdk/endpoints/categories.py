@@ -16,8 +16,8 @@ class CategoriesEndpoint(BaseEndpoint, ListMixin, CrudMixin, PaginationMixin):
             limit=limit, cursor=cursor, model=CategoryListResponse
         )
 
-    async def iter_all(self):
-        async for item in super().iter_all():
+    async def iter_all(self, **kwargs):
+        async for item in super().iter_all(**kwargs):
             yield Category.model_validate(item)
 
     async def create(self, payload: dict):

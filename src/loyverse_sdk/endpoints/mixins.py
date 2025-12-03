@@ -1,6 +1,8 @@
+from datetime import datetime
 from typing import AsyncGenerator, Type, TypeVar, Generic
 from pydantic import BaseModel
 from pydantic import ValidationError
+from loyverse_sdk.utils import standardize_datetime_str
 from loyverse_sdk.core.console import console
 
 
@@ -95,19 +97,42 @@ class PaginationMixin(Generic[T]):
     async def list_paginated(
         self,
         limit: int = 250,
+        created_at_min: datetime | None = None,
+        created_at_max: datetime | None = None,
+        updated_at_min: datetime | None = None,
+        updated_at_max: datetime | None = None,
         cursor: str | None = None,
     ) -> dict:
         params = {"limit": limit}
         if cursor:
             params["cursor"] = cursor
+        if created_at_min:
+            params["created_at_min"] = standardize_datetime_str(created_at_min)
+        if created_at_max:
+            params["created_at_max"] = standardize_datetime_str(created_at_max)
+        if updated_at_min:
+            params["updated_at_min"] = standardize_datetime_str(updated_at_min)
+        if updated_at_max:
+            params["updated_at_max"] = standardize_datetime_str(updated_at_max)
 
         return await self._get(self.path, params=params)
 
-    async def iter_all(self, limit: int = 250) -> AsyncGenerator[T, None]:
+    async def iter_all(
+        self,
+        limit: int = 250,
+        created_at_min: datetime | None = None,
+        created_at_max: datetime | None = None,
+        updated_at_min: datetime | None = None,
+        updated_at_max: datetime | None = None,
+    ) -> AsyncGenerator[T, None]:
         """Async generator to iterate over all items across all pages"""
         cursor = None
         while True:
-            resp = await self.list_paginated(cursor=cursor, limit=limit)
+            resp = await self.list_paginated(cursor=cursor, limit=limit,
+                                             created_at_min=created_at_min,
+                                             created_at_max=created_at_max,
+                                             updated_at_min=updated_at_min,
+                                             updated_at_max=updated_at_max)
             records = resp.get(self.path)
             for item in records:
                 yield item

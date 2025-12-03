@@ -10,11 +10,11 @@ from loyverse_sdk.models import Item, ItemListResponse
 class ItemsEndpoint(BaseEndpoint, ListMixin, RetrieveMixin, PaginationMixin):
     path = "items"
 
-    async def list(self, *, limit: int = 100, cursor: str | None = None):
+    async def list(self, limit: int = 100, cursor: str | None = None):
         return await super().list(limit=limit, cursor=cursor, model=ItemListResponse)
 
-    async def iter_all(self):
-        async for item in super().iter_all():
+    async def iter_all(self, **kwargs):
+        async for item in super().iter_all(**kwargs):
             yield Item.model_validate(item)
 
     async def retrieve(self, id: str):

@@ -15,8 +15,8 @@ class CustomersEndpoint(BaseEndpoint, ListMixin, RetrieveMixin, PaginationMixin)
             limit=limit, cursor=cursor, model=CustomerListResponse
         )
 
-    async def iter_all(self):
-        async for item in super().iter_all():
+    async def iter_all(self, **kwargs):
+        async for item in super().iter_all(**kwargs):
             yield Customer.model_validate(item)
 
     async def retrieve(self, id: str):

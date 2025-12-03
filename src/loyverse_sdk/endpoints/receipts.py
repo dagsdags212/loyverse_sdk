@@ -13,8 +13,8 @@ class ReceiptsEndpoint(BaseEndpoint, ListMixin, RetrieveMixin, PaginationMixin):
     async def list(self, limit: int = 100, cursor: str | None = None):
         return await super().list(limit=limit, cursor=cursor, model=ReceiptListResponse)
 
-    async def iter_all(self):
-        async for item in super().iter_all():
+    async def iter_all(self, **kwargs):
+        async for item in super().iter_all(**kwargs):
             yield Receipt.model_validate(item)
 
     async def retrieve(self, id: str):
