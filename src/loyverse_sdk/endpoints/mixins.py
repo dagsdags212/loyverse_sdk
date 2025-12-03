@@ -30,6 +30,7 @@ class ListMixin:
                 return model.model_validate(data)
             except ValidationError:
                 console.log("Validation failed, cannot instantiate model")
+                raise
         return data
 
 
