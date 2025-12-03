@@ -1,5 +1,5 @@
 [project]
-name = "loyverse-api"
+name = "loyverse-sdk"
 version = "0.1.0"
 description = "Asynchronous Python SDK for the Loyverse API"
 readme = "README.md"
@@ -39,9 +39,6 @@ markers = [
 filterwarnings = [
     "ignore::DeprecationWarning"
 ]
-
-[project.scripts]
-loyverse-api = "loyverse_api:main"
 
 [build-system]
 requires = ["hatchling"]
