@@ -23,11 +23,13 @@ class User(Base):
 
 
 class Employee(User):
-    stores: list[UUID]
+    stores: list[UUID] | str
     is_owner: bool = False
 
-    def serialize_store_ids(self) -> str:
-        return ",".join([str(id) for id in self.stores])
+    @field_validator("stores", mode="before")
+    def serialize_store_ids(cls, value) -> str:
+        """Concatenate store ids into a single string"""
+        return ",".join([str(id) for id in value])
 
 
 class EmployeeListResponse(Pagination):
