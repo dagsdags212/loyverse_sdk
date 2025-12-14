@@ -2,6 +2,7 @@ import httpx
 from loyverse_sdk.auth import Auth
 from loyverse_sdk.core.config import config
 from loyverse_sdk.exceptions import APIError
+from loyverse_sdk.endpoints.base import BaseEndpoint
 from loyverse_sdk.endpoints import (
     CategoriesEndpoint,
     CustomersEndpoint,
@@ -50,6 +51,24 @@ class LoyverseClient:
         self.taxes = TaxesEndpoint(self)
         self.webhooks = WebhooksEndpoint(self)
         self.variants = VariantsEndpoint(self)
+
+    def endpoints(self) -> list[BaseEndpoint]:
+        return [
+            self.categories,
+            self.customers,
+            self.discounts,
+            self.devices,
+            self.employees,
+            self.items,
+            self.merchant,
+            self.modifiers,
+            self.receipts,
+            self.stores,
+            self.suppliers,
+            self.taxes,
+            self.webhooks,
+            self.variants,
+        ]
 
     async def request(self, method: str, path: str, **kwargs) -> dict:
         """Send an HTTP request from the client to the endpoint"""
