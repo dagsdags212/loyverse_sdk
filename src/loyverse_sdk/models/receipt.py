@@ -31,7 +31,15 @@ class LineItem(BaseModel):
     quantity: NonNegativeInt
     price: NonNegativeFloat
 
-    def serialize(self) -> str:
+    def serialize(self, json: bool = True) -> str:
+        if json:
+            return dict(
+                id=str(self.item_id),
+                item_name=self.name,
+                quantity=self.quantity,
+                price=self.price,
+            )
+
         return f"{self.quantity}x{self.name}@{self.price}"
 
     def total_cost(self, precision: int = 2) -> float:
@@ -95,7 +103,7 @@ class Receipt(Base):
 
     @field_serializer("line_items", mode="plain")
     def serialize_line_items(self, value: list[LineItem]) -> str:
-        return ','.join([li.serialize() for li in value])
+        return [li.serialize(json=True) for li in value]
 
     @field_validator("payment_type_id", mode="before")
     def extract_payment_type_id(cls, value) -> UUID:
