@@ -19,8 +19,9 @@ class ListMixin:
         limit: int = 50,
         cursor: str | None = None,
         model: Type[BaseModel] | None = None,
+        **kwargs,
     ) -> dict:
-        params = {"limit": limit}
+        params = {"limit": limit, **kwargs}
         if cursor:
             params["cursor"] = cursor
 
@@ -31,6 +32,7 @@ class ListMixin:
             except ValidationError:
                 console.log("Validation failed, cannot instantiate model")
                 raise
+
         return data
 
 
