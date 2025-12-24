@@ -61,7 +61,7 @@ class LineItem(BaseModel):
 
 
 class Receipt(Base):
-    receipt_number: str
+    id: str = Field(alias="receipt_number")
     note: str | None = None
     receipt_type: str
     refund_for: str | None = None
