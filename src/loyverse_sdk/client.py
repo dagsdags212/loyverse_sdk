@@ -1,3 +1,4 @@
+from typing import Mapping
 import httpx
 from loyverse_sdk.auth import Auth
 from loyverse_sdk.core.config import config
@@ -34,7 +35,7 @@ class LoyverseClient:
 
         # Shared asynchronous client
         self._client = httpx.AsyncClient(
-            base_url=base_url, headers=self.auth.headers, timeout=10.0
+            base_url=base_url, headers=self.auth.headers, timeout=timeout,
         )
 
         self.categories = CategoriesEndpoint(self)
@@ -52,23 +53,25 @@ class LoyverseClient:
         self.webhooks = WebhooksEndpoint(self)
         self.variants = VariantsEndpoint(self)
 
-    def endpoints(self) -> list[BaseEndpoint]:
-        return [
-            self.categories,
-            self.customers,
-            self.discounts,
-            self.devices,
-            self.employees,
-            self.items,
-            self.merchant,
-            self.modifiers,
-            self.receipts,
-            self.stores,
-            self.suppliers,
-            self.taxes,
-            self.webhooks,
-            self.variants,
-        ]
+    @property
+    def endpoints(self) -> Mapping[str, BaseEndpoint]:
+        """Returns a mapping of API endpoints to their objects"""
+        return {
+            "categories": self.categories,
+            "customers": self.customers,
+            "discounts": self.discounts,
+            "devices": self.devices,
+            "employees": self.employees,
+            "items": self.items,
+            "merchant": self.merchant,
+            "modifiers": self.modifiers,
+            "receipts": self.receipts,
+            "stores": self.stores,
+            "suppliers": self.suppliers,
+            "taxes": self.taxes,
+            "webhooks": self.webhooks,
+            "variants": self.variants,
+        }
 
     async def request(self, method: str, path: str, **kwargs) -> dict:
         """Send an HTTP request from the client to the endpoint"""
