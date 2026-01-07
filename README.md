@@ -1,149 +1,170 @@
 # Loyverse SDK
 
-Asynchronous Python SDK for interacting with the Loyverse API
+Asynchronous Python SDK for the [Loyverse API](https://developer.loyverse.com/docs/), a point-of-sale (POS) system for managing business transactions, inventory, and customer data.
+
+## Overview
+
+The SDK provides:
+- **Async/await** interface using `httpx` for non-blocking API calls
+- **Type-safe** request/response models using Pydantic
+- **Automatic pagination** with cursor-based iteration via `iter_all()`
+- **Full CRUD operations** for supported endpoints
+- **14 endpoints**: categories, customers, discounts, devices, employees, items, merchant, modifiers, receipts, stores, suppliers, taxes, webhooks, variants
+
+### Codebase Structure
+
+**`src/loyverse_sdk/`** contains:
+- `client.py` - Main `LoyverseClient` class with endpoint access
+- `endpoints/` - Endpoint classes using mixin pattern for CRUD operations
+- `models/` - Pydantic models for request/response validation
+- `auth.py` - Token-based authentication
+- `core/` - Configuration, logging, and utilities
 
 ## Installation
 
-Use `uv` or `pip` to install the package from this git repository.
-
-```
-uv init
+```bash
 uv pip install git+https://github.com/dagsdags212/loyverse_sdk.git
 ```
 
 ## Setup
 
-Provide your Loyverse API key as an environment variable named `LOYVERSE_API_KEY`. 
-```sh
-export LOYVERSE_API_KEY=your_api_key
+Set your API token as an environment variable:
+
+```bash
+export LOYVERSE_API_TOKEN=your_api_token
 ```
 
-The API key may also be provided in a separate `.env` file located at the root of your project directory.
-```.env
-LOYVERSE_API_KEY=your_api_key
-```
+Or create a `.env` file in your project root:
 
-You can also specify the API key in your python script:
-```python
-import os
-os.environ["LOYVERSE_API_KEY"] = "your_api_key"
-```
-
-## Usage
-
-**Creating a client**
-
-Create an instance of the `LoyverseClient` to send asynchronous requests to the Loyverse RESTFUL API.
-```python
-from loyverse_sdk import LoyverseClient
-
-client = LoyverseClient(api_token=YOUR_API_TOKEN)
-
-# *Perform some operations*
-
-# Close client
-await client.close()
-```
-
-**Loading API token as an environment variable**
-
-Specify your Loyverse API token in a `.env` file at the project root.
-```.env
+```env
 LOYVERSE_API_TOKEN=your_api_token
 ```
 
-This will be loaded by a `config` object which can be used to create the client.
-```python
-from loyverse_sdk.core.config import config
-
-client = LoyverseClient(api_token=config.LOYVERSE_API_TOKEN)
-```
-
-**Retrieving data**
-
-Individual endpoints can be accessed as an attribute of the `LoyverseClient` instance.
-Naming conventions are consistent with the paths specified in the [official Loyverse API reference](https://developer.loyverse.com/docs/#tag/Suppliers).
+## Quick Start
 
 ```python
-# Fetch customer records
-customers = await client.customers.list()
+import asyncio
+from loyverse_sdk import LoyverseClient
 
-# Fetch receipt records
-receipts = await client.receipts.list()
+async def main():
+    # Create client (automatically loads token from environment)
+    client = LoyverseClient()
 
-# Fetch employee records
-employees = await client.employees.list()
+    # List customers
+    response = await client.customers.list(limit=10)
+    print(f"Found {len(response.items)} customers")
+
+    # Close connection
+    await client.close()
+
+asyncio.run(main())
 ```
 
-**CRUD operations**
+## Usage Examples
 
-Create an item category:
+### Customers Endpoint
+
+The customers endpoint manages customer data from your POS system.
+
+**List customers with pagination:**
+
 ```python
-payload = dict(name="Soaps and Detergent", color="BLUE")
-new_category = await client.categories.create(payload)
+# Get first page of customers
+response = await client.customers.list(limit=50)
 
-# Returns a pydantic model
-print(new_category)
+for customer in response.items:
+    print(f"{customer.name} - {customer.email}")
+    print(f"  Total visits: {customer.total_visits}")
+    print(f"  Total spent: ${customer.total_spent}")
+
+# Get next page using cursor
+if response.cursor:
+    next_page = await client.customers.list(limit=50, cursor=response.cursor)
 ```
 
+**Retrieve a single customer:**
+
+```python
+customer = await client.customers.retrieve(id="customer-uuid-here")
+print(customer.name)
+print(customer.phone_number)
+print(customer.address)
 ```
-Category(
-    id=UUID('3618d104-cf16-4b65-adce-84f03f71517b'),
-    name='Soaps and Detergents',
-    color=<CategoryColor.BLUE: 'BLUE'>,
-    created_at=datetime.datetime(2025, 11, 29, 23, 35, 26, tzinfo=TzInfo(0)),
-    deleted_at=None
+
+**Create a new customer:**
+
+```python
+new_customer = await client.customers.create({
+    "name": "Jane Smith",
+    "email": "jane@example.com",
+    "phone_number": "+1234567890",
+    "address": "123 Main St",
+    "city": "San Francisco",
+    "postal_code": "94102",
+    "customer_code": "CUST001"
+})
+
+print(f"Created customer: {new_customer.id}")
+```
+
+**Update an existing customer:**
+
+```python
+updated = await client.customers.update(
+    id=customer.id,
+    payload={"email": "newemail@example.com", "note": "VIP customer"}
 )
+
+print(f"Updated {updated.name}")
 ```
 
-Retrieve the newly created category:
-```python
-category = await client.categories.retrieve(new_category.id)
-```
-
-Update an item category:
-```python
-payload = dict(color="PURPLE")
-updated = await client.categories.update(id=new_category.id, payload=payload)
-
-# Returns the updated model
-print(updated)
-```
-
-```md
-Category(
-    id=UUID('a706109e-d589-4a9e-8a71-2b71419fff60'),
-    name='Services',
-    color=<CategoryColor.PURPLE: 'PURPLE'>,
-    created_at=datetime.datetime(2025, 12, 2, 7, 25, 25, 400000, tzinfo=TzInfo(0)),
-    deleted_at=None
-)
-```
-
-Delete an item catgory:
-```python
-deleted = await client.categories.delete(id=updated.id)
-print(deleted)
-```
-
-```
-{'deleted_object_ids': ['a706109e-d589-4a9e-8a71-2b71419fff60']}
-```
-
-**Fetching all records**
-
-The `PaginationMixin` implements cursor-based pagination for retrieving all records from an endpoint.
+**Delete a customer:**
 
 ```python
-# Retrieve all customers
+result = await client.customers.delete(id=customer.id)
+print(result)  # {'deleted_object_ids': ['customer-uuid']}
+```
 
+**Iterate through all customers:**
+
+```python
+# Automatically handles pagination across all pages
 async for customer in client.customers.iter_all():
-  print(f"{customer.name} first visited on {customer.created_at}")
+    print(f"{customer.name} - Last visit: {customer.last_visit}")
 ```
 
+**Filter customers by date:**
+
+```python
+from datetime import datetime
+
+# Get customers created in the last 30 days
+start_date = datetime.now() - timedelta(days=30)
+
+async for customer in client.customers.iter_all(created_at_min=start_date):
+    tenure = customer.tenure()  # timedelta between first and last visit
+    print(f"{customer.name} - Customer for {tenure.days} days")
 ```
-John Doe first visited on 2025-09-12 05:40:09+08:00
-Micheal Scott first visited on 2025-09-12 05:27:01+08:00
-Bart Simpson first visited on 2025-09-12 05:13:48+08:00
-Rick Grimes first visited on 2025-09-12 05:09:33+08:00
+
+### Other Endpoints
+
+All endpoints follow the same pattern. Available endpoints:
+
+```python
+client.categories   # Item categories
+client.customers    # Customer records
+client.discounts    # Discount rules
+client.devices      # POS devices
+client.employees    # Staff members
+client.items        # Inventory items
+client.merchant     # Merchant info
+client.modifiers    # Item modifiers
+client.receipts     # Transaction receipts
+client.stores       # Store locations
+client.suppliers    # Supplier records
+client.taxes        # Tax configurations
+client.variants     # Item variants
+client.webhooks     # Webhook subscriptions
 ```
+
+Each endpoint supports operations based on the [Loyverse API capabilities](https://developer.loyverse.com/docs/).
