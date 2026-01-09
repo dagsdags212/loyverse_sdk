@@ -1,4 +1,5 @@
-from typing import Mapping
+from datetime import datetime
+from typing import Callable, Mapping, Optional
 import httpx
 from loyverse_sdk.auth import Auth
 from loyverse_sdk.core.config import config
@@ -158,3 +159,174 @@ class LoyverseClient:
     async def close(self):
         """Close the client instance"""
         await self._client.aclose()
+
+    # ========================================================================
+    # DUCKDB EXPORT METHODS
+    # ========================================================================
+
+    async def export_to_duckdb(
+        self,
+        db_path: str,
+        resources: Optional[list[str]] = None,
+        created_at_min: Optional[datetime] = None,
+        created_at_max: Optional[datetime] = None,
+        updated_at_min: Optional[datetime] = None,
+        updated_at_max: Optional[datetime] = None,
+        batch_size: int = 1000,
+        progress_callback: Optional[Callable[[str, int, int], None]] = None,
+        create_indexes: bool = True,
+    ) -> dict[str, int]:
+        """
+        Export Loyverse data to DuckDB database.
+
+        Streams data from all 14 API endpoints and exports to a local DuckDB
+        database with proper relational schema and foreign keys.
+
+        Args:
+            db_path: Path to DuckDB database file (will be created if doesn't exist)
+            resources: List of resource names to export (None = all resources)
+                Valid: categories, customers, employees, items, receipts, etc.
+            created_at_min: Filter records created after this datetime
+            created_at_max: Filter records created before this datetime
+            updated_at_min: Filter records updated after this datetime
+            updated_at_max: Filter records updated before this datetime
+            batch_size: Number of records to insert per transaction (default: 1000)
+            progress_callback: Optional callback function(resource_name, current, total)
+            create_indexes: Whether to create indexes after export (default: True)
+
+        Returns:
+            Dictionary mapping resource names to record counts exported
+
+        Raises:
+            ExportError: If export fails
+
+        Example:
+            # Full export
+            client = LoyverseClient()
+            counts = await client.export_to_duckdb("loyverse.duckdb")
+            print(f"Exported: {counts}")
+            # Output: {'categories': 15, 'customers': 1250, 'receipts': 45000, ...}
+
+            # Date range export (specific period)
+            from datetime import datetime
+            counts = await client.export_to_duckdb(
+                "loyverse.duckdb",
+                created_at_min=datetime(2024, 1, 1),
+                created_at_max=datetime(2024, 12, 31),
+            )
+
+            # Selective export with progress
+            def progress(resource, current, total):
+                print(f"{resource}: {current}/{total}")
+
+            counts = await client.export_to_duckdb(
+                "loyverse.duckdb",
+                resources=["receipts", "customers", "items"],
+                progress_callback=progress,
+            )
+
+            await client.close()
+        """
+        from loyverse_sdk.db.exporter import DuckDBExporter
+
+        exporter = DuckDBExporter(self, db_path)
+        try:
+            return await exporter.export_all(
+                resources=resources,
+                created_at_min=created_at_min,
+                created_at_max=created_at_max,
+                updated_at_min=updated_at_min,
+                updated_at_max=updated_at_max,
+                batch_size=batch_size,
+                progress_callback=progress_callback,
+                create_indexes_after=create_indexes,
+            )
+        finally:
+            exporter.close()
+
+    async def export_resource_to_duckdb(
+        self,
+        resource_name: str,
+        db_path: str,
+        created_at_min: Optional[datetime] = None,
+        created_at_max: Optional[datetime] = None,
+        updated_at_min: Optional[datetime] = None,
+        updated_at_max: Optional[datetime] = None,
+        batch_size: int = 1000,
+    ) -> int:
+        """
+        Export a single resource to DuckDB.
+
+        Lower-level method for exporting individual resources with more control.
+        Use export_to_duckdb() for most cases.
+
+        Args:
+            resource_name: Name of resource (e.g., "receipts", "items", "customers")
+            db_path: Path to DuckDB database file
+            created_at_min: Filter records created after this datetime
+            created_at_max: Filter records created before this datetime
+            updated_at_min: Filter records updated after this datetime
+            updated_at_max: Filter records updated before this datetime
+            batch_size: Number of records to insert per transaction
+
+        Returns:
+            Number of records exported
+
+        Raises:
+            ExportError: If export fails
+
+        Example:
+            client = LoyverseClient()
+
+            # Export only receipts
+            count = await client.export_resource_to_duckdb(
+                "receipts",
+                "loyverse.duckdb"
+            )
+            print(f"Exported {count} receipts")
+
+            await client.close()
+        """
+        from loyverse_sdk.db.exporter import DuckDBExporter
+
+        exporter = DuckDBExporter(self, db_path)
+        try:
+            return await exporter.export_resource(
+                resource_name,
+                created_at_min=created_at_min,
+                created_at_max=created_at_max,
+                updated_at_min=updated_at_min,
+                updated_at_max=updated_at_max,
+                batch_size=batch_size,
+            )
+        finally:
+            exporter.close()
+
+    def init_duckdb_schema(
+        self,
+        db_path: str,
+        drop_existing: bool = False,
+    ) -> None:
+        """
+        Initialize DuckDB database schema without exporting data.
+
+        Creates all tables, foreign keys, and constraints but doesn't populate them.
+        Useful for setting up the database structure before export or for manual
+        data insertion.
+
+        Args:
+            db_path: Path to DuckDB database file
+            drop_existing: If True, drops all tables before creating schema
+
+        Example:
+            client = LoyverseClient()
+
+            # Initialize empty database
+            client.init_duckdb_schema("loyverse.duckdb")
+
+            # Reset database (drop all tables and recreate)
+            client.init_duckdb_schema("loyverse.duckdb", drop_existing=True)
+        """
+        from loyverse_sdk.db.schema_builder import create_duckdb_schema
+
+        create_duckdb_schema(db_path, drop_existing=drop_existing)

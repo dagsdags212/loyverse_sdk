@@ -285,3 +285,28 @@ class ResourceNotFoundError(LoyverseSDKError):
             error_msg = f"No {resource_type} found: {message}"
 
         super().__init__(error_msg)
+
+
+class ExportError(LoyverseSDKError):
+    """
+    Exception raised when database export operations fail.
+
+    This exception is raised during DuckDB export operations when:
+    - Database connection fails
+    - Table creation fails
+    - Data insertion fails
+    - Batch processing encounters errors
+    - Schema initialization fails
+
+    Attributes:
+        resource_name (str | None): Name of the resource being exported when error occurred
+    """
+
+    def __init__(self, message: str, resource_name: str | None = None) -> None:
+        self.resource_name = resource_name
+
+        error_msg = message
+        if resource_name:
+            error_msg = f"Export error for '{resource_name}': {message}"
+
+        super().__init__(error_msg)

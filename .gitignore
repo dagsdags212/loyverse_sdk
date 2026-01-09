@@ -8,6 +8,7 @@ wheels/
 
 # Misc. scripts
 main.py
+app.py
 
 # Command runners
 justfile
@@ -16,4 +17,12 @@ Makefile
 # Virtual environments
 .venv
 .env
-*.sqlite
+
+# Databases
+*.sqlite*
+*.db
+*.duckdb
+
+# Markdown files
+TODO.md
+CLAUDE.md
