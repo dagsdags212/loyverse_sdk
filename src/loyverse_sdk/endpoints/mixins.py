@@ -1,9 +1,10 @@
 from datetime import datetime
 from typing import AsyncGenerator, Type, TypeVar, Generic
 from pydantic import BaseModel
-from pydantic import ValidationError
+from pydantic import ValidationError as PydanticValidationError
 from loyverse_sdk.utils import standardize_datetime_str
 from loyverse_sdk.core.console import console
+from loyverse_sdk.exceptions import ValidationError, PaginationError
 
 
 T = TypeVar("T")
@@ -29,9 +30,13 @@ class ListMixin:
         if model:
             try:
                 return model.model_validate(data)
-            except ValidationError:
-                console.log("Validation failed, cannot instantiate model")
-                raise
+            except PydanticValidationError as e:
+                console.log(f"[red]Validation failed for {model.__name__}[/red]")
+                raise ValidationError(
+                    message=str(e),
+                    validation_errors=e.errors(),
+                    model_name=model.__name__
+                )
 
         return data
 
@@ -46,8 +51,13 @@ class RetrieveMixin:
         if model:
             try:
                 return model.model_validate(data)
-            except ValidationError:
-                console.log("Validation failed, cannot instantiate model")
+            except PydanticValidationError as e:
+                console.log(f"[red]Validation failed for {model.__name__}[/red]")
+                raise ValidationError(
+                    message=str(e),
+                    validation_errors=e.errors(),
+                    model_name=model.__name__
+                )
 
         return data
 
@@ -128,8 +138,18 @@ class PaginationMixin(Generic[T]):
         updated_at_min: datetime | None = None,
         updated_at_max: datetime | None = None,
     ) -> AsyncGenerator[T, None]:
-        """Async generator to iterate over all items across all pages"""
+        """
+        Async generator to iterate over all items across all pages.
+
+        Yields individual items from paginated API responses, automatically
+        handling cursor-based pagination until all pages are consumed.
+
+        Raises:
+            PaginationError: If pagination metadata is missing or invalid
+        """
         cursor = None
+        seen_cursors = set()
+
         while True:
             resp = await self.list_paginated(
                 cursor=cursor,
@@ -139,13 +159,41 @@ class PaginationMixin(Generic[T]):
                 updated_at_min=updated_at_min,
                 updated_at_max=updated_at_max,
             )
+
+            # Validate response structure
+            if not isinstance(resp, dict):
+                raise PaginationError(
+                    f"Expected dict response for pagination, got {type(resp).__name__}"
+                )
+
             records = resp.get(self.path)
+            if records is None:
+                raise PaginationError(
+                    f"Response missing expected key '{self.path}' for records"
+                )
+
+            if not isinstance(records, list):
+                raise PaginationError(
+                    f"Expected list of records, got {type(records).__name__}"
+                )
+
+            # Yield each record
             for item in records:
                 yield item
 
+            # Get next cursor
             cursor = resp.get("cursor")
 
-            if not cursor:
+            # Check for pagination loop (cursor we've seen before)
+            if cursor and cursor in seen_cursors:
+                raise PaginationError(
+                    f"Pagination loop detected - cursor '{cursor}' seen multiple times"
+                )
+
+            if cursor:
+                seen_cursors.add(cursor)
+            else:
+                # No more pages
                 break
 
 

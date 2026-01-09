@@ -1,4 +1,5 @@
 from loyverse_sdk.core.config import config
+from loyverse_sdk.exceptions import ConfigurationError
 
 
 class Auth:
@@ -7,7 +8,10 @@ class Auth:
     def __init__(self, token: str | None = None):
         self.token = token or config.LOYVERSE_API_TOKEN
         if not self.token:
-            raise ValueError("Loyverse API token must be provided.")
+            raise ConfigurationError(
+                "Loyverse API token must be provided. "
+                "Set LOYVERSE_API_TOKEN environment variable or pass api_token parameter to LoyverseClient."
+            )
 
     @property
     def headers(self) -> dict[str, str]:

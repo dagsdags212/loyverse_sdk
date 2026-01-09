@@ -2,7 +2,16 @@ from typing import Mapping
 import httpx
 from loyverse_sdk.auth import Auth
 from loyverse_sdk.core.config import config
-from loyverse_sdk.exceptions import APIError
+from loyverse_sdk.exceptions import (
+    APIError,
+    BadRequestError,
+    AuthenticationError,
+    ForbiddenError,
+    NotFoundError,
+    RateLimitError,
+    ServerError,
+    NetworkError,
+)
 from loyverse_sdk.endpoints.base import BaseEndpoint
 from loyverse_sdk.endpoints import (
     CategoriesEndpoint,
@@ -74,15 +83,73 @@ class LoyverseClient:
         }
 
     async def request(self, method: str, path: str, **kwargs) -> dict:
-        """Send an HTTP request from the client to the endpoint"""
-        resp = await self._client.request(method, path, **kwargs)
+        """
+        Send an HTTP request from the client to the endpoint.
+
+        Args:
+            method: HTTP method (GET, POST, PUT, PATCH, DELETE)
+            path: API endpoint path
+            **kwargs: Additional arguments passed to httpx (params, json, headers, etc.)
+
+        Returns:
+            Response data as dict or text
+
+        Raises:
+            BadRequestError: For HTTP 400 errors
+            AuthenticationError: For HTTP 401 errors
+            ForbiddenError: For HTTP 403 errors
+            NotFoundError: For HTTP 404 errors
+            RateLimitError: For HTTP 429 errors
+            ServerError: For HTTP 5xx errors
+            APIError: For other HTTP error status codes
+            NetworkError: For network/connection issues
+        """
+        try:
+            resp = await self._client.request(method, path, **kwargs)
+        except httpx.TimeoutException as e:
+            raise NetworkError(
+                f"Request to '{path}' timed out",
+                original_error=e
+            )
+        except httpx.ConnectError as e:
+            raise NetworkError(
+                f"Failed to connect to API at '{path}'",
+                original_error=e
+            )
+        except httpx.HTTPError as e:
+            raise NetworkError(
+                f"Network error occurred while requesting '{path}'",
+                original_error=e
+            )
+
+        # Handle error responses
         if resp.status_code >= 400:
             try:
                 payload = resp.json()
             except Exception:
                 payload = resp.text
-            raise APIError(resp.status_code, payload)
 
+            # Map status codes to specific exception types
+            if resp.status_code == 400:
+                raise BadRequestError(payload, endpoint=path)
+            elif resp.status_code == 401:
+                raise AuthenticationError(payload, endpoint=path)
+            elif resp.status_code == 403:
+                raise ForbiddenError(payload, endpoint=path)
+            elif resp.status_code == 404:
+                raise NotFoundError(payload, endpoint=path)
+            elif resp.status_code == 429:
+                # Try to extract Retry-After header
+                retry_after = resp.headers.get("Retry-After")
+                retry_after_seconds = int(retry_after) if retry_after and retry_after.isdigit() else None
+                raise RateLimitError(payload, endpoint=path, retry_after=retry_after_seconds)
+            elif resp.status_code >= 500:
+                raise ServerError(resp.status_code, payload, endpoint=path)
+            else:
+                # Generic API error for other status codes
+                raise APIError(resp.status_code, payload, endpoint=path)
+
+        # Parse successful response
         try:
             return resp.json()
         except Exception:
