@@ -287,29 +287,65 @@ class InventoryDB(SQLModel, table=True):
 
 
 class ShiftDB(SQLModel, table=True):
-    """Employee shifts/work periods
-
-    Note: Monetary fields (opening_amount, closing_amount, etc.) use float/DOUBLE
-    instead of Decimal due to DuckDB's lack of native Decimal support. This can
-    cause precision loss for large monetary values. Consumers should round to
-    appropriate decimal places when displaying shift totals.
-    """
+    """Employee work shifts with POS device cashup"""
 
     __tablename__ = "shifts"
 
     id: str = Field(primary_key=True)
-    employee_id: str = Field(foreign_key="employees.id")
-    start_time: datetime
-    end_time: Optional[datetime] = None
-    opening_amount: float = 0.0
-    closing_amount: float = 0.0
-    cash_sales: float = 0.0
-    card_sales: float = 0.0
-    returned_amount: float = 0.0
-    status: str = "open"
-    created_at: datetime
-    updated_at: datetime
-    deleted_at: Optional[datetime] = None
+    store_id: str
+    pos_device_id: str
+    opened_at: datetime
+    closed_at: datetime | None = None
+    opened_by_employee: str
+    closed_by_employee: str | None = None
+    starting_cash: float = 0.0
+    cash_payments: float = 0.0
+    cash_refunds: float = 0.0
+    paid_in: float = 0.0
+    paid_out: float = 0.0
+    expected_cash: float = 0.0
+    actual_cash: float = 0.0
+    gross_sales: float = 0.0
+    refunds: float = 0.0
+    discounts: float = 0.0
+    net_sales: float = 0.0
+    tip: float = 0.0
+    surcharge: float = 0.0
+
+
+class ShiftTaxDB(SQLModel, table=True):
+    """Shift tax breakdown (child of shifts)"""
+
+    __tablename__ = "shift_taxes"
+
+    id: str = Field(primary_key=True)
+    shift_id: str = Field(foreign_key="shifts.id")
+    name: str
+    rate: float
+    amount: float
+
+
+class ShiftPaymentDB(SQLModel, table=True):
+    """Shift payment type breakdown (child of shifts)"""
+
+    __tablename__ = "shift_payments"
+
+    id: str = Field(primary_key=True)
+    shift_id: str = Field(foreign_key="shifts.id")
+    name: str
+    amount: float
+
+
+class ShiftCashMovementDB(SQLModel, table=True):
+    """Shift cash movements (child of shifts)"""
+
+    __tablename__ = "shift_cash_movements"
+
+    id: str = Field(primary_key=True)
+    shift_id: str = Field(foreign_key="shifts.id")
+    time: datetime
+    amount: float
+    note: str | None = None
 
 
 # ============================================================================
