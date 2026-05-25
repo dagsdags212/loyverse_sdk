@@ -19,8 +19,19 @@ class TestReceiptModel:
             source=None,
             total_money=300,
             total_tax=30,
+            receipt_date=datetime.now(),
             line_items=[
-                dict(item_name=f"item{i}", quantity=i, price=i * 100) for i in range(3)
+                dict(
+                    id=uuid4(),
+                    item_id=uuid4(),
+                    variant_id=uuid4(),
+                    item_name=f"item{i}",
+                    sku=f"SKU{i}",
+                    cost=10.0,
+                    quantity=i,
+                    price=i * 100,
+                )
+                for i in range(1, 4)
             ],
             points_earned=10,
             points_deducted=0,
@@ -114,8 +125,20 @@ class TestReceiptModel:
     def test_default_handle(self):
         payload = dict(
             receipt_number="8-1234",
+            receipt_type="SALE",
+            receipt_date=datetime.now(),
             line_items=[
-                dict(item_name=f"item{i}", quantity=i, price=i * 100) for i in range(3)
+                dict(
+                    id=uuid4(),
+                    item_id=uuid4(),
+                    variant_id=uuid4(),
+                    item_name=f"item{i}",
+                    sku=f"SKU{i}",
+                    cost=10.0,
+                    quantity=i,
+                    price=i * 100,
+                )
+                for i in range(1, 4)
             ],
             total_money=200,
             points_balance=100,
