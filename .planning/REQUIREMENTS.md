@@ -7,8 +7,8 @@
 
 ### Test Bugs
 
-- [ ] **TST-01**: Fix all 8 test model imports from `loyverse_api` to `loyverse_sdk`
-- [ ] **TST-02**: Fix `surchage` typo to `surcharge` in receipt model test
+- [x] **TST-01**: Fix all 8 test model imports from `loyverse_api` to `loyverse_sdk`
+- [x] **TST-02**: Fix `surchage` typo to `surcharge` in receipt model test
 
 ### Code Bugs
 
@@ -29,7 +29,7 @@
 
 ### Verification
 
-- [ ] **VER-01**: All existing tests pass after fixes
+- [x] **VER-01**: All existing tests pass after fixes
 
 ## v2 Requirements
 
@@ -50,8 +50,8 @@ None — this is a single cleanup phase.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TST-01 | Phase 2 | Pending |
-| TST-02 | Phase 2 | Pending |
+| TST-01 | Phase 2 | Complete |
+| TST-02 | Phase 2 | Complete |
 | BUG-01 | Phase 1 | Complete |
 | BUG-02 | Phase 1 | Complete |
 | CLN-01 | Phase 1 | Pending |
@@ -60,7 +60,7 @@ None — this is a single cleanup phase.
 | CLN-04 | Phase 1 | Pending |
 | QLT-01 | Phase 1 | Complete |
 | QLT-02 | Phase 1 | Complete |
-| VER-01 | Phase 2 | Pending |
+| VER-01 | Phase 2 | Complete |
 
 **Coverage:**
 - v1 requirements: 11 total
