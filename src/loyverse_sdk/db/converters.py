@@ -13,8 +13,7 @@ from uuid import UUID
 
 
 def pydantic_to_sql_dict(
-    model_instance: Any,
-    exclude_fields: Optional[set[str]] = None
+    model_instance: Any, exclude_fields: Optional[set[str]] = None
 ) -> dict[str, Any]:
     """
     Convert Pydantic model instance to SQL-ready dictionary.
@@ -44,7 +43,11 @@ def pydantic_to_sql_dict(
         data = model_instance.copy()
     else:
         # Handle Pydantic model
-        data = model_instance.model_dump() if hasattr(model_instance, 'model_dump') else dict(model_instance)
+        data = (
+            model_instance.model_dump()
+            if hasattr(model_instance, "model_dump")
+            else dict(model_instance)
+        )
 
     # Remove excluded fields
     if exclude_fields:
@@ -68,8 +71,7 @@ def pydantic_to_sql_dict(
 
 
 def split_nested_data(
-    resource_name: str,
-    data: dict[str, Any]
+    resource_name: str, data: dict[str, Any]
 ) -> tuple[dict[str, Any], dict[str, list[dict]], dict[str, list[dict]]]:
     """
     Split a record into main table data, junction table data, and child table data.
@@ -120,6 +122,13 @@ def split_nested_data(
     elif resource_name == "variants":
         main_record, junction_records = _split_variants(main_record)
 
+    elif resource_name == "shifts":
+        main_record, junction_records, child_records = _split_shifts(main_record)
+
+    elif resource_name == "inventory":
+        # No nested data to split - inventory has no arrays
+        pass
+
     # Other resources (categories, stores, suppliers, customers, pos_devices, merchant)
     # have no nested data to split
 
@@ -129,6 +138,7 @@ def split_nested_data(
 # ============================================================================
 # RESOURCE-SPECIFIC SPLITTING FUNCTIONS
 # ============================================================================
+
 
 def _split_items(data: dict) -> tuple[dict, dict[str, list[dict]]]:
     """
@@ -238,7 +248,9 @@ def _split_receipts(data: dict) -> tuple[dict, dict[str, list[dict]]]:
     return main_record, child_records
 
 
-def _split_modifiers(data: dict) -> tuple[dict, dict[str, list[dict]], dict[str, list[dict]]]:
+def _split_modifiers(
+    data: dict,
+) -> tuple[dict, dict[str, list[dict]], dict[str, list[dict]]]:
     """
     Split modifier data into main record, junction records, and child records.
 
@@ -380,9 +392,72 @@ def _split_variants(data: dict) -> tuple[dict, dict[str, list[dict]]]:
     return main_record, junction_records
 
 
+def _split_shifts(
+    data: dict,
+) -> tuple[dict, dict[str, list[dict]], dict[str, list[dict]]]:
+    """
+    Split shift data into main record, junction records, and child records.
+
+    Extracts:
+    - taxes → shift_taxes child table
+    - payments → shift_payments child table
+    - cash_movements → shift_cash_movements child table
+    """
+    main_record = data.copy()
+    junction_records = {}
+    child_records = {}
+
+    # Extract taxes
+    taxes = main_record.pop("taxes", [])
+    if taxes:
+        child_records["shift_taxes"] = []
+        for tax in taxes:
+            child_records["shift_taxes"].append(
+                {
+                    "id": str(tax.get("id")),
+                    "shift_id": str(main_record["id"]),
+                    "name": tax.get("name"),
+                    "rate": tax.get("rate", 0.0),
+                    "amount": tax.get("amount", 0.0),
+                }
+            )
+
+    # Extract payments
+    payments = main_record.pop("payments", [])
+    if payments:
+        child_records["shift_payments"] = []
+        for payment in payments:
+            child_records["shift_payments"].append(
+                {
+                    "id": str(payment.get("id")),
+                    "shift_id": str(main_record["id"]),
+                    "name": payment.get("name"),
+                    "amount": payment.get("amount", 0.0),
+                }
+            )
+
+    # Extract cash_movements
+    cash_movements = main_record.pop("cash_movements", [])
+    if cash_movements:
+        child_records["shift_cash_movements"] = []
+        for movement in cash_movements:
+            child_records["shift_cash_movements"].append(
+                {
+                    "id": str(movement.get("id")),
+                    "shift_id": str(main_record["id"]),
+                    "time": movement.get("time"),
+                    "amount": movement.get("amount", 0.0),
+                    "note": movement.get("note"),
+                }
+            )
+
+    return main_record, junction_records, child_records
+
+
 # ============================================================================
 # UTILITY FUNCTIONS
 # ============================================================================
+
 
 def convert_uuid_fields(data: dict) -> dict:
     """
@@ -468,9 +543,7 @@ def validate_required_fields(data: dict, required_fields: list[str]) -> None:
             missing_fields.append(field)
 
     if missing_fields:
-        raise ValueError(
-            f"Missing required fields: {', '.join(missing_fields)}"
-        )
+        raise ValueError(f"Missing required fields: {', '.join(missing_fields)}")
 
 
 def get_resource_required_fields(resource_name: str) -> list[str]:
@@ -500,9 +573,18 @@ def get_resource_required_fields(resource_name: str) -> list[str]:
         "payment_types": ["id", "name", "type", "created_at", "updated_at"],
         "items": ["id", "name", "created_at", "updated_at"],
         "variants": ["id", "item_id", "sku", "created_at", "updated_at"],
-        "receipts": ["id", "receipt_number", "receipt_type", "receipt_date",
-                     "total_amount", "employee_id", "store_id", "pos_device_id",
-                     "created_at", "updated_at"],
+        "receipts": [
+            "id",
+            "receipt_number",
+            "receipt_type",
+            "receipt_date",
+            "total_amount",
+            "employee_id",
+            "store_id",
+            "pos_device_id",
+            "created_at",
+            "updated_at",
+        ],
         "merchant": ["id", "business_name", "currency", "created_at"],
     }
 
@@ -510,9 +592,7 @@ def get_resource_required_fields(resource_name: str) -> list[str]:
 
 
 def prepare_record_for_insert(
-    resource_name: str,
-    record: dict,
-    validate: bool = True
+    resource_name: str, record: dict, validate: bool = True
 ) -> dict:
     """
     Prepare a record for database insertion.
