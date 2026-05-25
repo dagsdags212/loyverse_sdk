@@ -25,7 +25,7 @@ Fix all identified bugs, remove dead code, tighten exception handling, and get t
 
 Plans:
 - [x] 01-01-PLAN.md — Remove orphaned files (shift.py, schemas.py, logging.py) and dead utils.py functions
-- [ ] 01-02-PLAN.md — Fix Tax model duplicate name field and MerchantEndpoint singleton retrieve
+- [x] 01-02-PLAN.md — Fix Tax model duplicate name field and MerchantEndpoint singleton retrieve
 - [ ] 01-03-PLAN.md — Replace 13 bare `except Exception:` blocks with specific exception types
 
 ### Phase 2: Test Fixes & Verification
@@ -45,5 +45,5 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Code Cleanup & Bugfixes | 0/3 | Planned | - |
+| 1. Code Cleanup & Bugfixes | 2/3 | In Progress|  |
 | 2. Test Fixes & Verification | 0/TBD | Not started | - |

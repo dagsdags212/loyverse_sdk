@@ -12,8 +12,8 @@
 
 ### Code Bugs
 
-- [ ] **BUG-01**: Remove duplicate `name` field in Tax model (second overwrites `max_length=40`)
-- [ ] **BUG-02**: Fix `MerchantEndpoint.retrieve(id)` — remove unused `id` parameter, construct correct URL for singleton resource
+- [x] **BUG-01**: Remove duplicate `name` field in Tax model (second overwrites `max_length=40`)
+- [x] **BUG-02**: Fix `MerchantEndpoint.retrieve(id)` — remove unused `id` parameter, construct correct URL for singleton resource
 
 ### Dead Code Removal
 
@@ -52,8 +52,8 @@ None — this is a single cleanup phase.
 |-------------|-------|--------|
 | TST-01 | Phase 2 | Pending |
 | TST-02 | Phase 2 | Pending |
-| BUG-01 | Phase 1 | Pending |
-| BUG-02 | Phase 1 | Pending |
+| BUG-01 | Phase 1 | Complete |
+| BUG-02 | Phase 1 | Complete |
 | CLN-01 | Phase 1 | Pending |
 | CLN-02 | Phase 1 | Pending |
 | CLN-03 | Phase 1 | Pending |
