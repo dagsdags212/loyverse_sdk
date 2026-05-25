@@ -21,10 +21,12 @@ from loyverse_sdk.endpoints import (
     DiscountsEndpoint,
     EmployeesEndpoint,
     ItemsEndpoint,
+    InventoryEndpoint,
     MerchantEndpoint,
     ModifiersEndpoint,
     PosDevicesEndpoints,
     ReceiptsEndpoint,
+    ShiftsEndpoint,
     StoresEndpoint,
     SuppliersEndpoint,
     TaxesEndpoint,
@@ -56,10 +58,12 @@ class LoyverseClient:
         self.discounts = DiscountsEndpoint(self)
         self.devices = PosDevicesEndpoints(self)
         self.employees = EmployeesEndpoint(self)
+        self.inventory = InventoryEndpoint(self)
         self.items = ItemsEndpoint(self)
         self.merchant = MerchantEndpoint(self)
         self.modifiers = ModifiersEndpoint(self)
         self.receipts = ReceiptsEndpoint(self)
+        self.shifts = ShiftsEndpoint(self)
         self.stores = StoresEndpoint(self)
         self.suppliers = SuppliersEndpoint(self)
         self.taxes = TaxesEndpoint(self)
@@ -75,10 +79,12 @@ class LoyverseClient:
             "discounts": self.discounts,
             "devices": self.devices,
             "employees": self.employees,
+            "inventory": self.inventory,
             "items": self.items,
             "merchant": self.merchant,
             "modifiers": self.modifiers,
             "receipts": self.receipts,
+            "shifts": self.shifts,
             "stores": self.stores,
             "suppliers": self.suppliers,
             "taxes": self.taxes,

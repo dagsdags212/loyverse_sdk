@@ -13,6 +13,8 @@ from loyverse_sdk.models.store import Store, StoreListResponse
 from loyverse_sdk.models.item import Item, ItemListResponse
 from loyverse_sdk.models.category import Category, CategoryListResponse
 from loyverse_sdk.models.modifier import Modifier, ModifierListResponse
+from loyverse_sdk.models.inventory import Inventory, InventoryListResponse
+from loyverse_sdk.models.shift import Shift, ShiftListResponse
 from loyverse_sdk.models.supplier import Supplier, SupplierListResponse
 from loyverse_sdk.models.tax import Tax, TaxListResponse
 from loyverse_sdk.models.webhook import Webhook, WebhookListResponse

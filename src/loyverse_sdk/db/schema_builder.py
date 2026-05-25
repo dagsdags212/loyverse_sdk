@@ -15,8 +15,10 @@ import duckdb
 # MAIN RESOURCE TABLES
 # ============================================================================
 
+
 class CategoryDB(SQLModel, table=True):
     """Product categories"""
+
     __tablename__ = "categories"
 
     id: str = Field(primary_key=True)
@@ -29,6 +31,7 @@ class CategoryDB(SQLModel, table=True):
 
 class StoreDB(SQLModel, table=True):
     """Business locations/stores"""
+
     __tablename__ = "stores"
 
     id: str = Field(primary_key=True)
@@ -47,6 +50,7 @@ class StoreDB(SQLModel, table=True):
 
 class SupplierDB(SQLModel, table=True):
     """Vendors/suppliers"""
+
     __tablename__ = "suppliers"
 
     id: str = Field(primary_key=True)
@@ -69,6 +73,7 @@ class SupplierDB(SQLModel, table=True):
 
 class TaxDB(SQLModel, table=True):
     """Tax configurations"""
+
     __tablename__ = "taxes"
 
     id: str = Field(primary_key=True)
@@ -82,6 +87,7 @@ class TaxDB(SQLModel, table=True):
 
 class ModifierDB(SQLModel, table=True):
     """Item modifiers (e.g., size, toppings)"""
+
     __tablename__ = "modifiers"
 
     id: str = Field(primary_key=True)
@@ -94,6 +100,7 @@ class ModifierDB(SQLModel, table=True):
 
 class DiscountDB(SQLModel, table=True):
     """Discount rules"""
+
     __tablename__ = "discounts"
 
     id: str = Field(primary_key=True)
@@ -109,6 +116,7 @@ class DiscountDB(SQLModel, table=True):
 
 class EmployeeDB(SQLModel, table=True):
     """Employees/staff"""
+
     __tablename__ = "employees"
 
     id: str = Field(primary_key=True)
@@ -123,6 +131,7 @@ class EmployeeDB(SQLModel, table=True):
 
 class CustomerDB(SQLModel, table=True):
     """Customers"""
+
     __tablename__ = "customers"
 
     id: str = Field(primary_key=True)
@@ -149,6 +158,7 @@ class CustomerDB(SQLModel, table=True):
 
 class PosDeviceDB(SQLModel, table=True):
     """Point of sale devices"""
+
     __tablename__ = "pos_devices"
 
     id: str = Field(primary_key=True)
@@ -160,6 +170,7 @@ class PosDeviceDB(SQLModel, table=True):
 
 class PaymentTypeDB(SQLModel, table=True):
     """Payment methods"""
+
     __tablename__ = "payment_types"
 
     id: str = Field(primary_key=True)
@@ -172,6 +183,7 @@ class PaymentTypeDB(SQLModel, table=True):
 
 class ItemDB(SQLModel, table=True):
     """Inventory items/products"""
+
     __tablename__ = "items"
 
     id: str = Field(primary_key=True)
@@ -198,6 +210,7 @@ class ItemDB(SQLModel, table=True):
 
 class VariantDB(SQLModel, table=True):
     """Product variants"""
+
     __tablename__ = "variants"
 
     id: str = Field(primary_key=True)
@@ -219,6 +232,7 @@ class VariantDB(SQLModel, table=True):
 
 class ReceiptDB(SQLModel, table=True):
     """Sales receipts/transactions"""
+
     __tablename__ = "receipts"
 
     id: str = Field(primary_key=True)
@@ -250,6 +264,7 @@ class ReceiptDB(SQLModel, table=True):
 
 class MerchantDB(SQLModel, table=True):
     """Merchant/business account information"""
+
     __tablename__ = "merchant"
 
     id: str = Field(primary_key=True)
@@ -260,12 +275,50 @@ class MerchantDB(SQLModel, table=True):
     created_at: datetime
 
 
+class InventoryDB(SQLModel, table=True):
+    """Inventory item stock levels across warehouses"""
+
+    __tablename__ = "inventory"
+
+    id: str = Field(primary_key=True)
+    item_id: str = Field(foreign_key="items.id")
+    warehouse_id: str = Field(foreign_key="stores.id")
+    available: int = 0
+    committed: int = 0
+    damaged: int = 0
+    created_at: datetime
+    updated_at: datetime
+    deleted_at: Optional[datetime] = None
+
+
+class ShiftDB(SQLModel, table=True):
+    """Employee shifts/work periods"""
+
+    __tablename__ = "shifts"
+
+    id: str = Field(primary_key=True)
+    employee_id: str = Field(foreign_key="employees.id")
+    start_time: datetime
+    end_time: Optional[datetime] = None
+    opening_amount: float = 0.0
+    closing_amount: float = 0.0
+    cash_sales: float = 0.0
+    card_sales: float = 0.0
+    returned_amount: float = 0.0
+    status: str = "open"
+    created_at: datetime
+    updated_at: datetime
+    deleted_at: Optional[datetime] = None
+
+
 # ============================================================================
 # JUNCTION TABLES (Many-to-Many Relationships)
 # ============================================================================
 
+
 class EmployeeStoreDB(SQLModel, table=True):
     """Links employees to stores they work at"""
+
     __tablename__ = "employee_store"
 
     employee_id: str = Field(foreign_key="employees.id", primary_key=True)
@@ -274,6 +327,7 @@ class EmployeeStoreDB(SQLModel, table=True):
 
 class ItemTaxDB(SQLModel, table=True):
     """Links items to taxes"""
+
     __tablename__ = "item_tax"
 
     item_id: str = Field(foreign_key="items.id", primary_key=True)
@@ -282,6 +336,7 @@ class ItemTaxDB(SQLModel, table=True):
 
 class ItemModifierDB(SQLModel, table=True):
     """Links items to modifiers"""
+
     __tablename__ = "item_modifier"
 
     item_id: str = Field(foreign_key="items.id", primary_key=True)
@@ -290,6 +345,7 @@ class ItemModifierDB(SQLModel, table=True):
 
 class ModifierStoreDB(SQLModel, table=True):
     """Links modifiers to stores"""
+
     __tablename__ = "modifier_store"
 
     modifier_id: str = Field(foreign_key="modifiers.id", primary_key=True)
@@ -298,6 +354,7 @@ class ModifierStoreDB(SQLModel, table=True):
 
 class TaxStoreDB(SQLModel, table=True):
     """Links taxes to stores"""
+
     __tablename__ = "tax_store"
 
     tax_id: str = Field(foreign_key="taxes.id", primary_key=True)
@@ -306,6 +363,7 @@ class TaxStoreDB(SQLModel, table=True):
 
 class DiscountStoreDB(SQLModel, table=True):
     """Links discounts to stores"""
+
     __tablename__ = "discount_store"
 
     discount_id: str = Field(foreign_key="discounts.id", primary_key=True)
@@ -314,6 +372,7 @@ class DiscountStoreDB(SQLModel, table=True):
 
 class PaymentTypeStoreDB(SQLModel, table=True):
     """Links payment types to stores"""
+
     __tablename__ = "payment_type_store"
 
     payment_type_id: str = Field(foreign_key="payment_types.id", primary_key=True)
@@ -322,6 +381,7 @@ class PaymentTypeStoreDB(SQLModel, table=True):
 
 class VariantStoreDB(SQLModel, table=True):
     """Links variants to stores with additional store-specific data"""
+
     __tablename__ = "variant_store"
 
     variant_id: str = Field(foreign_key="variants.id", primary_key=True)
@@ -335,8 +395,10 @@ class VariantStoreDB(SQLModel, table=True):
 # CHILD TABLES (One-to-Many Relationships)
 # ============================================================================
 
+
 class ReceiptLineItemDB(SQLModel, table=True):
     """Line items within receipts"""
+
     __tablename__ = "receipt_line_items"
 
     id: str = Field(primary_key=True)
@@ -352,6 +414,7 @@ class ReceiptLineItemDB(SQLModel, table=True):
 
 class ModifierOptionDB(SQLModel, table=True):
     """Options within modifiers"""
+
     __tablename__ = "modifier_options"
 
     id: str = Field(primary_key=True)
@@ -368,8 +431,10 @@ class ModifierOptionDB(SQLModel, table=True):
 # METADATA TABLE
 # ============================================================================
 
+
 class SyncMetadataDB(SQLModel, table=True):
     """Tracks sync state for each resource"""
+
     __tablename__ = "sync_metadata"
 
     resource_name: str = Field(primary_key=True)
@@ -381,6 +446,7 @@ class SyncMetadataDB(SQLModel, table=True):
 # ============================================================================
 # SCHEMA CREATION FUNCTIONS
 # ============================================================================
+
 
 def create_duckdb_schema(db_path: str, drop_existing: bool = False) -> None:
     """
@@ -400,13 +466,32 @@ def create_duckdb_schema(db_path: str, drop_existing: bool = False) -> None:
             # Drop all tables in reverse dependency order
             tables = [
                 "sync_metadata",
-                "modifier_options", "receipt_line_items",
-                "variant_store", "payment_type_store", "discount_store",
-                "tax_store", "modifier_store", "item_modifier", "item_tax",
+                "modifier_options",
+                "receipt_line_items",
+                "variant_store",
+                "payment_type_store",
+                "discount_store",
+                "tax_store",
+                "modifier_store",
+                "item_modifier",
+                "item_tax",
                 "employee_store",
-                "merchant", "receipts", "variants", "items", "payment_types",
-                "pos_devices", "customers", "employees", "discounts",
-                "modifiers", "taxes", "suppliers", "stores", "categories"
+                "inventory",
+                "shifts",
+                "merchant",
+                "receipts",
+                "variants",
+                "items",
+                "payment_types",
+                "pos_devices",
+                "customers",
+                "employees",
+                "discounts",
+                "modifiers",
+                "taxes",
+                "suppliers",
+                "stores",
+                "categories",
             ]
             for table in tables:
                 conn.execute(f"DROP TABLE IF EXISTS {table}")
@@ -656,6 +741,41 @@ def create_duckdb_schema(db_path: str, drop_existing: bool = False) -> None:
             )
         """)
 
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS inventory (
+                id TEXT PRIMARY KEY,
+                item_id TEXT NOT NULL,
+                warehouse_id TEXT NOT NULL,
+                available INTEGER NOT NULL DEFAULT 0,
+                committed INTEGER NOT NULL DEFAULT 0,
+                damaged INTEGER NOT NULL DEFAULT 0,
+                created_at TIMESTAMP NOT NULL,
+                updated_at TIMESTAMP NOT NULL,
+                deleted_at TIMESTAMP,
+                FOREIGN KEY (item_id) REFERENCES items(id),
+                FOREIGN KEY (warehouse_id) REFERENCES stores(id)
+            )
+        """)
+
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS shifts (
+                id TEXT PRIMARY KEY,
+                employee_id TEXT NOT NULL,
+                start_time TIMESTAMP NOT NULL,
+                end_time TIMESTAMP,
+                opening_amount DOUBLE NOT NULL DEFAULT 0.0,
+                closing_amount DOUBLE NOT NULL DEFAULT 0.0,
+                cash_sales DOUBLE NOT NULL DEFAULT 0.0,
+                card_sales DOUBLE NOT NULL DEFAULT 0.0,
+                returned_amount DOUBLE NOT NULL DEFAULT 0.0,
+                status TEXT NOT NULL DEFAULT 'open',
+                created_at TIMESTAMP NOT NULL,
+                updated_at TIMESTAMP NOT NULL,
+                deleted_at TIMESTAMP,
+                FOREIGN KEY (employee_id) REFERENCES employees(id)
+            )
+        """)
+
         # Junction tables
         conn.execute("""
             CREATE TABLE IF NOT EXISTS employee_store (
@@ -793,34 +913,70 @@ def create_indexes(db_path: str) -> None:
 
     try:
         # Indexes on receipts table (most queried)
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_receipts_customer ON receipts(customer_id)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_receipts_employee ON receipts(employee_id)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_receipts_store ON receipts(store_id)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_receipts_date ON receipts(receipt_date)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_receipts_type ON receipts(receipt_type)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_receipts_created ON receipts(created_at)")
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_receipts_customer ON receipts(customer_id)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_receipts_employee ON receipts(employee_id)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_receipts_store ON receipts(store_id)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_receipts_date ON receipts(receipt_date)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_receipts_type ON receipts(receipt_type)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_receipts_created ON receipts(created_at)"
+        )
 
         # Indexes on line items
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_line_items_receipt ON receipt_line_items(receipt_id)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_line_items_item ON receipt_line_items(item_id)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_line_items_variant ON receipt_line_items(variant_id)")
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_line_items_receipt ON receipt_line_items(receipt_id)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_line_items_item ON receipt_line_items(item_id)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_line_items_variant ON receipt_line_items(variant_id)"
+        )
 
         # Indexes on items
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_items_category ON items(category_id)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_items_supplier ON items(primary_supplier_id)")
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_items_category ON items(category_id)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_items_supplier ON items(primary_supplier_id)"
+        )
 
         # Indexes on variants
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_variants_item ON variants(item_id)")
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_variants_item ON variants(item_id)"
+        )
 
         # Indexes on POS devices
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_devices_store ON pos_devices(store_id)")
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_devices_store ON pos_devices(store_id)"
+        )
 
         # Indexes on deleted_at for filtering active records
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_categories_deleted ON categories(deleted_at)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_customers_deleted ON customers(deleted_at)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_employees_deleted ON employees(deleted_at)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_items_deleted ON items(deleted_at)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_receipts_deleted ON receipts(deleted_at)")
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_categories_deleted ON categories(deleted_at)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_customers_deleted ON customers(deleted_at)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_employees_deleted ON employees(deleted_at)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_items_deleted ON items(deleted_at)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_receipts_deleted ON receipts(deleted_at)"
+        )
 
         print(f"✓ Created indexes in {db_path}")
 
