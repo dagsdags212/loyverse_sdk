@@ -22,7 +22,7 @@
 **Plans**: 1 plan
 
 Plans:
-- [ ] 03-01-PLAN.md — Audit all endpoints, implement missing inventory + shifts, register in client, update DuckDB schema
+- [x] 03-01-PLAN.md — Audit all endpoints, implement missing inventory + shifts, register in client, update DuckDB schema
 
 ---
 

@@ -22,9 +22,13 @@ class Shift(BaseModel):
     updated_at: datetime = Field(default_factory=datetime.now)
     deleted_at: datetime | None = None
 
+    @field_serializer("id", "employee_id", mode="plain")
+    def serialize_uuid(cls, value: UUID) -> str:
+        if isinstance(value, UUID):
+            return str(value)
+        return value
+
     @field_serializer(
-        "id",
-        "employee_id",
         "opening_amount",
         "closing_amount",
         "cash_sales",
@@ -32,9 +36,7 @@ class Shift(BaseModel):
         "returned_amount",
         mode="plain",
     )
-    def serialize_fields(self, value):
-        if isinstance(value, UUID):
-            return str(value)
+    def serialize_decimal(cls, value: Decimal) -> str:
         if isinstance(value, Decimal):
             return str(value)
         return value
