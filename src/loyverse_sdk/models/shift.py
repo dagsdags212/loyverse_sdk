@@ -1,47 +1,36 @@
-from uuid import UUID, uuid4
 from datetime import datetime
-from decimal import Decimal
-from pydantic import BaseModel, Field, field_validator, field_serializer
-from loyverse_sdk.models.common import Pagination
+from typing import Any
+from pydantic import BaseModel, Field, field_validator
 
 
 class Shift(BaseModel):
-    """Employee shift/work period"""
+    """Employee work shift with POS device cashup"""
 
-    id: UUID = Field(default_factory=uuid4)
-    employee_id: UUID
-    start_time: datetime
-    end_time: datetime | None = None
-    opening_amount: Decimal = Field(default=Decimal("0"))
-    closing_amount: Decimal = Field(default=Decimal("0"))
-    cash_sales: Decimal = Field(default=Decimal("0"))
-    card_sales: Decimal = Field(default=Decimal("0"))
-    returned_amount: Decimal = Field(default=Decimal("0"))
-    status: str = "open"
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now)
-    deleted_at: datetime | None = None
+    id: str
+    store_id: str
+    pos_device_id: str
+    opened_at: datetime
+    closed_at: datetime | None = None
+    opened_by_employee: str
+    closed_by_employee: str | None = None
+    starting_cash: float = 0.0
+    cash_payments: float = 0.0
+    cash_refunds: float = 0.0
+    paid_in: float = 0.0
+    paid_out: float = 0.0
+    expected_cash: float = 0.0
+    actual_cash: float = 0.0
+    gross_sales: float = 0.0
+    refunds: float = 0.0
+    discounts: float = 0.0
+    net_sales: float = 0.0
+    tip: float = 0.0
+    surcharge: float = 0.0
+    taxes: list[dict[str, Any]] = Field(default_factory=list)
+    payments: list[dict[str, Any]] = Field(default_factory=list)
+    cash_movements: list[dict[str, Any]] = Field(default_factory=list)
 
-    @field_serializer("id", "employee_id", mode="plain")
-    def serialize_uuid(cls, value: UUID) -> str:
-        if isinstance(value, UUID):
-            return str(value)
-        return value
-
-    @field_serializer(
-        "opening_amount",
-        "closing_amount",
-        "cash_sales",
-        "card_sales",
-        "returned_amount",
-        mode="plain",
-    )
-    def serialize_decimal(cls, value: Decimal) -> str:
-        if isinstance(value, Decimal):
-            return str(value)
-        return value
-
-    @field_validator("created_at", "updated_at", "deleted_at", mode="after")
+    @field_validator("opened_at", "closed_at", mode="after")
     def utc_to_local(cls, value: datetime | None) -> datetime | None:
         if value:
             import pytz
@@ -54,5 +43,5 @@ class Shift(BaseModel):
         return value
 
 
-class ShiftListResponse(Pagination):
-    items: list[Shift] = Field(alias="shifts")
+class ShiftListResponse(BaseModel):
+    shifts: list[Shift] = Field(alias="shifts")
