@@ -24,7 +24,7 @@ Fix all identified bugs, remove dead code, tighten exception handling, and get t
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Remove orphaned files (shift.py, schemas.py, logging.py) and dead utils.py functions
+- [x] 01-01-PLAN.md — Remove orphaned files (shift.py, schemas.py, logging.py) and dead utils.py functions
 - [ ] 01-02-PLAN.md — Fix Tax model duplicate name field and MerchantEndpoint singleton retrieve
 - [ ] 01-03-PLAN.md — Replace 13 bare `except Exception:` blocks with specific exception types
 
