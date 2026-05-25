@@ -50,8 +50,8 @@ None — this is a single cleanup phase.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TST-01 | Phase 1 | Pending |
-| TST-02 | Phase 1 | Pending |
+| TST-01 | Phase 2 | Pending |
+| TST-02 | Phase 2 | Pending |
 | BUG-01 | Phase 1 | Pending |
 | BUG-02 | Phase 1 | Pending |
 | CLN-01 | Phase 1 | Pending |
@@ -60,11 +60,13 @@ None — this is a single cleanup phase.
 | CLN-04 | Phase 1 | Pending |
 | QLT-01 | Phase 1 | Pending |
 | QLT-02 | Phase 1 | Pending |
-| VER-01 | Phase 1 | Pending |
+| VER-01 | Phase 2 | Pending |
 
 **Coverage:**
 - v1 requirements: 11 total
-- Mapped to phases: 11
+- Mapped to phases: 11 ✓
+  - Phase 1: 8 requirements
+  - Phase 2: 3 requirements
 - Unmapped: 0 ✓
 
 ---
