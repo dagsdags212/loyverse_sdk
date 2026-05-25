@@ -276,19 +276,14 @@ class MerchantDB(SQLModel, table=True):
 
 
 class InventoryDB(SQLModel, table=True):
-    """Inventory item stock levels across warehouses"""
+    """Inventory item stock levels per variant per store"""
 
     __tablename__ = "inventory"
 
-    id: str = Field(primary_key=True)
-    item_id: str = Field(foreign_key="items.id")
-    warehouse_id: str = Field(foreign_key="stores.id")
-    available: int = 0
-    committed: int = 0
-    damaged: int = 0
-    created_at: datetime
+    variant_id: str = Field(primary_key=True)
+    store_id: str = Field(primary_key=True)
+    in_stock: int = 0
     updated_at: datetime
-    deleted_at: Optional[datetime] = None
 
 
 class ShiftDB(SQLModel, table=True):
