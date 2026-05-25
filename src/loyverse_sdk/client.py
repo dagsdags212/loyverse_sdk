@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from typing import Callable, Mapping, Optional
 import httpx
@@ -45,7 +46,9 @@ class LoyverseClient:
 
         # Shared asynchronous client
         self._client = httpx.AsyncClient(
-            base_url=base_url, headers=self.auth.headers, timeout=timeout,
+            base_url=base_url,
+            headers=self.auth.headers,
+            timeout=timeout,
         )
 
         self.categories = CategoriesEndpoint(self)
@@ -108,26 +111,21 @@ class LoyverseClient:
         try:
             resp = await self._client.request(method, path, **kwargs)
         except httpx.TimeoutException as e:
-            raise NetworkError(
-                f"Request to '{path}' timed out",
-                original_error=e
-            )
+            raise NetworkError(f"Request to '{path}' timed out", original_error=e)
         except httpx.ConnectError as e:
             raise NetworkError(
-                f"Failed to connect to API at '{path}'",
-                original_error=e
+                f"Failed to connect to API at '{path}'", original_error=e
             )
         except httpx.HTTPError as e:
             raise NetworkError(
-                f"Network error occurred while requesting '{path}'",
-                original_error=e
+                f"Network error occurred while requesting '{path}'", original_error=e
             )
 
         # Handle error responses
         if resp.status_code >= 400:
             try:
                 payload = resp.json()
-            except Exception:
+            except json.JSONDecodeError:
                 payload = resp.text
 
             # Map status codes to specific exception types
@@ -142,8 +140,12 @@ class LoyverseClient:
             elif resp.status_code == 429:
                 # Try to extract Retry-After header
                 retry_after = resp.headers.get("Retry-After")
-                retry_after_seconds = int(retry_after) if retry_after and retry_after.isdigit() else None
-                raise RateLimitError(payload, endpoint=path, retry_after=retry_after_seconds)
+                retry_after_seconds = (
+                    int(retry_after) if retry_after and retry_after.isdigit() else None
+                )
+                raise RateLimitError(
+                    payload, endpoint=path, retry_after=retry_after_seconds
+                )
             elif resp.status_code >= 500:
                 raise ServerError(resp.status_code, payload, endpoint=path)
             else:
@@ -153,7 +155,7 @@ class LoyverseClient:
         # Parse successful response
         try:
             return resp.json()
-        except Exception:
+        except json.JSONDecodeError:
             return resp.text
 
     async def close(self):
