@@ -2,19 +2,17 @@
 Service layer for Customers with business validation.
 """
 
+from loyverse_sdk.services.base import BaseService
 from loyverse_sdk.models import Customer
 from loyverse_sdk.exceptions import ValidationError, NotFoundError
 
 
-class CustomersService:
+class CustomersService(BaseService):
     """
     Service layer for customer operations with email validation.
 
     Wraps CustomersEndpoint and adds business validation logic.
     """
-
-    def __init__(self, client) -> None:
-        self._client = client
 
     def _validate_email(self, email: str | None) -> str | None:
         """Validate email format. Allows None (optional field)."""
