@@ -13,9 +13,9 @@
 | 01 | Code Cleanup & Bugfixes | ✅ COMPLETE | 4 | — | Dead code removed, bugs fixed, bare exceptions replaced |
 | 02 | Test Fixes & Verification | ✅ COMPLETE | 1 | 3 | 8 test files fixed, all 25 model tests pass |
 | 03 | Cover Missing Loyverse API Endpoints (Inventory) | ✅ COMPLETE | 2 | 6 | Inventory model/DDL/endpoint fixed, exporter integrated, 139 tests |
-| 04 | Services Layer with CRUD Business Logic | 🔄 IN PROGRESS | 0+ | — | Business logic layer for Loyverse records |
+| 04 | Services Layer with CRUD Business Logic | ❌ REMOVED | — | — | Feature removed from repo — services layer was deleted |
 | 05 | Test Suite Optimization | ✅ COMPLETE | 1 | 3 | 123 tests pass, pyarrow added, non-essential tests pruned |
-| 06 | Export to Flat Files (CSV + Parquet) | ⚪ PLANNED | 2 | 0 | Exporters package: CSV + Parquet via Polars, client integration |
+| 06 | Export to Flat Files (CSV + Parquet) | ✅ COMPLETE | 2 | 2 | Exporters package: CSV + Parquet via Polars, client integration |
 
 ---
 
@@ -65,12 +65,9 @@ Delivered:
 
 ---
 
-## Phase 04: Services Layer with CRUD Business Logic 🔄
+## Phase 04: Services Layer with CRUD Business Logic ❌
 
-**Status:** IN PROGRESS
-**Artifacts:** 04-03-SUMMARY.md, 04-REVIEW.md, 04-VERIFICATION.md
-
-Scope: Build a services layer that provides CRUD business logic abstractions on top of the raw Loyverse API endpoint wrappers.
+**Status:** REMOVED — Feature was deleted from the repo. The services layer (`src/loyverse_sdk/services/`) was intentionally removed as it is no longer in scope for this milestone. Planning artifacts (04-03-SUMMARY.md, 04-REVIEW.md, 04-VERIFICATION.md) are retained in the phase directory for historical reference only.
 
 ---
 
@@ -92,18 +89,26 @@ Delivered:
 
 ---
 
-## Phase 06: Export to Flat Files (CSV + Parquet) ⚪
+## Phase 06: Export to Flat Files (CSV + Parquet) ✅
 
-**Status:** PLANNED
+**Status:** COMPLETE — Shipped 2026-05-27
 **Requirements:** EXP-01, EXP-02, EXP-03
+**Artifacts:** 06-01-PLAN.md, 06-01-SUMMARY.md, 06-02-PLAN.md, 06-02-SUMMARY.md, 06-VERIFICATION.md, 06-VALIDATION.md
 
 Scope: Build flat-file export capabilities that allow users to save Loyverse API data directly to CSV and Parquet files. Leverages Polars (already a dependency) for efficient serialization. Integrates with the existing endpoint classes for filtered data retrieval before export.
 
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 06-01-PLAN.md — Core Export Module with Unit Tests (FlatFileExporter class, CSV/Parquet export via Polars)
-- [ ] 06-02-PLAN.md — Client Integration & Example (LoyverseClient convenience methods, example script)
+- [x] 06-01-PLAN.md — Core Export Module with Unit Tests (FlatFileExporter class, CSV/Parquet export via Polars)
+- [x] 06-02-PLAN.md — Client Integration & Example (LoyverseClient convenience methods, example script)
+
+Delivered:
+- FlatFileExporter class with export_csv() and export_parquet() methods using Polars
+- LoyverseClient convenience methods: export_to_csv(), export_to_parquet()
+- Example script demonstrating query→filter→export workflow (examples/export_flat_files.py)
+- 21 tests pass (17 exporter + 4 client integration)
+- Nyquist VALIDATION.md compliant
 
 ---
 
@@ -113,5 +118,5 @@ See `.planning/REQUIREMENTS.md` for detailed requirement-to-phase mapping.
 
 ---
 
-*Last updated: 2026-05-26*
-*Next action: `/gsd-execute-phase 04` to continue the services layer*
+*Last updated: 2026-05-27*
+*Milestone v1.1 complete — Phase 04 intentionally removed*
