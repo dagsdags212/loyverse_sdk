@@ -104,3 +104,9 @@ class TestInventoryModel:
         }
         response = InventoryListResponse.model_validate(data)
         assert response.next_cursor is None
+
+    def test_inventory_list_response_inherits_pagination(self):
+        """Test InventoryListResponse inherits from Pagination base."""
+        from loyverse_sdk.models.common import Pagination
+
+        assert issubclass(InventoryListResponse, Pagination)
