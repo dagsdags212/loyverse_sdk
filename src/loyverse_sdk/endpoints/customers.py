@@ -1,11 +1,10 @@
 from loyverse_sdk.endpoints.base import BaseEndpoint
-from loyverse_sdk.core.config import config
 from loyverse_sdk.endpoints.mixins import (
     CrudMixin,
     ListMixin,
     PaginationMixin,
 )
-from loyverse_sdk.models import Customer, CustomerListResponse
+from loyverse_sdk.models import Customer, CustomerListQuery, CustomerListResponse
 
 
 class CustomersEndpoint(BaseEndpoint, CrudMixin, ListMixin, PaginationMixin):
@@ -20,11 +19,11 @@ class CustomersEndpoint(BaseEndpoint, CrudMixin, ListMixin, PaginationMixin):
     async def retrieve(self, id: str):
         return await super().retrieve(id, model=Customer)
 
-    async def list(self, limit: int = config.PAGE_LIMIT, cursor: str | None = None):
-        return await super().list(
-            limit=limit, cursor=cursor, model=CustomerListResponse
-        )
+    async def list(self, query: CustomerListQuery | None = None):
+        query = query or CustomerListQuery()
+        return await super().list(model=CustomerListResponse, **query.to_params())
 
-    async def iter_all(self, **kwargs):
-        async for item in super().iter_all(**kwargs):
+    async def iter_all(self, query: CustomerListQuery | None = None):
+        query = query or CustomerListQuery()
+        async for item in super().iter_all(**query.to_params()):
             yield Customer.model_validate(item)

@@ -6,7 +6,7 @@ from loyverse_sdk.endpoints.mixins import (
     CreateMixin,
     UpdateMixin,
 )
-from loyverse_sdk.models import Item, ItemListResponse
+from loyverse_sdk.models import Item, ItemListQuery, ItemListResponse
 
 
 class ItemsEndpoint(
@@ -20,15 +20,14 @@ class ItemsEndpoint(
     async def retrieve(self, id: str):
         return await super().retrieve(id, model=Item)
 
-    # TODO: upload single image using /items/{item_id}/image endpoint
-    # TODO: delete single image using /items/{item_id}/image endpoint
-
     async def update(self, id: str, payload: dict):
         return await super().update(id=id, payload=payload, model=Item)
 
-    async def list(self, limit: int = 100, cursor: str | None = None):
-        return await super().list(limit=limit, cursor=cursor, model=ItemListResponse)
+    async def list(self, query: ItemListQuery | None = None):
+        query = query or ItemListQuery()
+        return await super().list(model=ItemListResponse, **query.to_params())
 
-    async def iter_all(self, **kwargs):
-        async for item in super().iter_all(**kwargs):
+    async def iter_all(self, query: ItemListQuery | None = None):
+        query = query or ItemListQuery()
+        async for item in super().iter_all(**query.to_params()):
             yield Item.model_validate(item)

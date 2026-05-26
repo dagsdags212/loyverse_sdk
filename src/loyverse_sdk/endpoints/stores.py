@@ -1,11 +1,10 @@
 from loyverse_sdk.endpoints.base import BaseEndpoint
-from loyverse_sdk.core.config import config
 from loyverse_sdk.endpoints.mixins import (
     ListMixin,
     RetrieveMixin,
     PaginationMixin,
 )
-from loyverse_sdk.models import Store, StoreListResponse
+from loyverse_sdk.models import Store, StoreListQuery, StoreListResponse
 
 
 class StoresEndpoint(BaseEndpoint, RetrieveMixin, ListMixin, PaginationMixin):
@@ -14,9 +13,11 @@ class StoresEndpoint(BaseEndpoint, RetrieveMixin, ListMixin, PaginationMixin):
     async def retrieve(self, id: str):
         return await super().retrieve(id, model=Store)
 
-    async def list(self, limit: int = config.PAGE_LIMIT, cursor: str | None = None):
-        return await super().list(limit=limit, cursor=cursor, model=StoreListResponse)
+    async def list(self, query: StoreListQuery | None = None):
+        query = query or StoreListQuery()
+        return await super().list(model=StoreListResponse, **query.to_params())
 
-    async def iter_all(self, **kwargs):
-        async for item in super().iter_all(**kwargs):
+    async def iter_all(self, query: StoreListQuery | None = None):
+        query = query or StoreListQuery()
+        async for item in super().iter_all(**query.to_params()):
             yield Store.model_validate(item)

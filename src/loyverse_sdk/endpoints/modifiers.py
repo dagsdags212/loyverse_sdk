@@ -1,5 +1,4 @@
 from loyverse_sdk.endpoints.base import BaseEndpoint
-from loyverse_sdk.core.config import config
 from loyverse_sdk.endpoints.mixins import (
     ListMixin,
     RetrieveMixin,
@@ -7,7 +6,7 @@ from loyverse_sdk.endpoints.mixins import (
     CreateMixin,
     UpdateMixin,
 )
-from loyverse_sdk.models import Modifier, ModifierListResponse
+from loyverse_sdk.models import Modifier, ModifierListQuery, ModifierListResponse
 
 
 class ModifiersEndpoint(
@@ -24,11 +23,11 @@ class ModifiersEndpoint(
     async def update(self, id: str, payload: dict):
         return await super().update(id=id, payload=payload, model=Modifier)
 
-    async def list(self, limit: int = config.PAGE_LIMIT, cursor: str | None = None):
-        return await super().list(
-            limit=limit, cursor=cursor, model=ModifierListResponse
-        )
+    async def list(self, query: ModifierListQuery | None = None):
+        query = query or ModifierListQuery()
+        return await super().list(model=ModifierListResponse, **query.to_params())
 
-    async def iter_all(self, **kwargs):
-        async for item in super().iter_all(**kwargs):
+    async def iter_all(self, query: ModifierListQuery | None = None):
+        query = query or ModifierListQuery()
+        async for item in super().iter_all(**query.to_params()):
             yield Modifier.model_validate(item)
