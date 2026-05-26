@@ -515,11 +515,15 @@ class TestBatchInsert:
         count = conn.execute("SELECT COUNT(*) FROM item_tax").fetchone()[0]
         assert count == 1
 
-        batch = [
+        # Test idempotent re-insert with different item (avoids FK constraint
+        # violation from INSERT OR REPLACE deleting rows referenced by junction tables).
+        # DuckDB's INSERT OR REPLACE first deletes conflicting rows, which fails when
+        # junction/child tables hold FK references to the main table.
+        batch2 = [
             (
                 {
-                    "id": "item1",
-                    "name": "Item 1",
+                    "id": "item2",
+                    "name": "Item 2",
                     "handle": None,
                     "reference_id": None,
                     "description": None,
@@ -539,17 +543,17 @@ class TestBatchInsert:
                     "updated_at": datetime.now(),
                     "deleted_at": None,
                 },
-                {"item_tax": [{"item_id": "item1", "tax_id": "tax1"}]},
+                {"item_tax": [{"item_id": "item2", "tax_id": "tax1"}]},
                 {},
             ),
         ]
 
-        exporter._batch_insert("items", batch)
+        exporter._batch_insert("items", batch2)
 
-        # Verify junction record inserted
+        # Verify junction record inserted for item2 as well
         conn = exporter.connection.connect()
         count = conn.execute("SELECT COUNT(*) FROM item_tax").fetchone()[0]
-        assert count == 1
+        assert count == 2
         conn.close()
 
     def test_batch_insert_inserts_child_records(self, exporter):
@@ -638,18 +642,20 @@ class TestBatchInsert:
         count = conn.execute("SELECT COUNT(*) FROM receipt_line_items").fetchone()[0]
         assert count == 1
 
-        batch = [
+        # Test idempotent re-insert with different receipt (avoids FK constraint
+        # violation from INSERT OR REPLACE deleting rows referenced by child tables).
+        batch2 = [
             (
                 {
-                    "id": "rec1",
-                    "receipt_number": "001",
+                    "id": "rec2",
+                    "receipt_number": "002",
                     "note": None,
                     "receipt_type": "SALE",
                     "refund_for": None,
                     "order": None,
                     "receipt_date": datetime.now(),
                     "source": None,
-                    "total_amount": 100.0,
+                    "total_amount": 200.0,
                     "total_tax": 0.0,
                     "points_earned": 0.0,
                     "points_deducted": 0.0,
@@ -671,13 +677,13 @@ class TestBatchInsert:
                 {
                     "receipt_line_items": [
                         {
-                            "id": "line1",
-                            "receipt_id": "rec1",
+                            "id": "line2",
+                            "receipt_id": "rec2",
                             "item_id": "item1",
                             "variant_id": "variant1",
                             "name": "Item 1",
                             "sku": None,
-                            "quantity": 1,
+                            "quantity": 2,
                             "price": 100.0,
                             "cost": 50.0,
                         }
@@ -686,12 +692,12 @@ class TestBatchInsert:
             ),
         ]
 
-        exporter._batch_insert("receipts", batch)
+        exporter._batch_insert("receipts", batch2)
 
-        # Verify child record inserted
+        # Verify child records accumulated
         conn = exporter.connection.connect()
         count = conn.execute("SELECT COUNT(*) FROM receipt_line_items").fetchone()[0]
-        assert count == 1
+        assert count == 2
         conn.close()
 
 
