@@ -780,17 +780,13 @@ def create_duckdb_schema(db_path: str, drop_existing: bool = False) -> None:
 
         conn.execute("""
             CREATE TABLE IF NOT EXISTS inventory (
-                id TEXT PRIMARY KEY,
-                item_id TEXT NOT NULL,
-                warehouse_id TEXT NOT NULL,
-                available INTEGER NOT NULL DEFAULT 0,
-                committed INTEGER NOT NULL DEFAULT 0,
-                damaged INTEGER NOT NULL DEFAULT 0,
-                created_at TIMESTAMP NOT NULL,
+                variant_id TEXT NOT NULL,
+                store_id TEXT NOT NULL,
+                in_stock INTEGER NOT NULL DEFAULT 0,
                 updated_at TIMESTAMP NOT NULL,
-                deleted_at TIMESTAMP,
-                FOREIGN KEY (item_id) REFERENCES items(id),
-                FOREIGN KEY (warehouse_id) REFERENCES stores(id)
+                PRIMARY KEY (variant_id, store_id),
+                FOREIGN KEY (variant_id) REFERENCES variants(id),
+                FOREIGN KEY (store_id) REFERENCES stores(id)
             )
         """)
 
