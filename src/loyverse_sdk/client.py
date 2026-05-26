@@ -33,25 +33,6 @@ from loyverse_sdk.endpoints import (
     WebhooksEndpoint,
     VariantsEndpoint,
 )
-from loyverse_sdk.services import (
-    BaseService,
-    ItemsService,
-    CustomersService,
-    DiscountsService,
-    CategoriesService,
-    TaxesService,
-    DevicesService,
-    EmployeesService,
-    InventoryService,
-    MerchantService,
-    ModifiersService,
-    ReceiptsService,
-    ShiftsService,
-    StoresService,
-    SuppliersService,
-    VariantsService,
-    WebhooksService,
-)
 
 
 class LoyverseClient:
@@ -89,24 +70,6 @@ class LoyverseClient:
         self.webhooks = WebhooksEndpoint(self)
         self.variants = VariantsEndpoint(self)
 
-        # Services layer - business logic validation on top of endpoints
-        self.items_service = ItemsService(self)
-        self.customers_service = CustomersService(self)
-        self.discounts_service = DiscountsService(self)
-        self.categories_service = CategoriesService(self)
-        self.taxes_service = TaxesService(self)
-        self.devices_service = DevicesService(self)
-        self.employees_service = EmployeesService(self)
-        self.inventory_service = InventoryService(self)
-        self.merchant_service = MerchantService(self)
-        self.modifiers_service = ModifiersService(self)
-        self.receipts_service = ReceiptsService(self)
-        self.shifts_service = ShiftsService(self)
-        self.stores_service = StoresService(self)
-        self.suppliers_service = SuppliersService(self)
-        self.variants_service = VariantsService(self)
-        self.webhooks_service = WebhooksService(self)
-
     @property
     def endpoints(self) -> Mapping[str, BaseEndpoint]:
         """Returns a mapping of API endpoints to their objects"""
@@ -127,28 +90,6 @@ class LoyverseClient:
             "taxes": self.taxes,
             "webhooks": self.webhooks,
             "variants": self.variants,
-        }
-
-    @property
-    def services(self) -> Mapping[str, BaseService]:
-        """Returns a mapping of service names to their service objects"""
-        return {
-            "items": self.items_service,
-            "customers": self.customers_service,
-            "discounts": self.discounts_service,
-            "categories": self.categories_service,
-            "taxes": self.taxes_service,
-            "devices": self.devices_service,
-            "employees": self.employees_service,
-            "inventory": self.inventory_service,
-            "merchant": self.merchant_service,
-            "modifiers": self.modifiers_service,
-            "receipts": self.receipts_service,
-            "shifts": self.shifts_service,
-            "stores": self.stores_service,
-            "suppliers": self.suppliers_service,
-            "variants": self.variants_service,
-            "webhooks": self.webhooks_service,
         }
 
     async def request(self, method: str, path: str, **kwargs) -> dict:
