@@ -28,4 +28,4 @@ class Inventory(BaseModel):
 
 
 class InventoryListResponse(BaseModel):
-    inventory: list[Inventory]
+    items: list[Inventory] = Field(alias="inventory_levels")

@@ -38,7 +38,7 @@ class TestInventoryModel:
     def test_inventory_list_response_alias(self):
         """Test InventoryListResponse uses correct alias."""
         data = {
-            "inventory": [
+            "inventory_levels": [
                 {
                     "variant_id": "var-1",
                     "store_id": "store-1",
@@ -48,13 +48,13 @@ class TestInventoryModel:
             ]
         }
         response = InventoryListResponse.model_validate(data)
-        assert len(response.inventory) == 1
-        assert response.inventory[0].variant_id == "var-1"
+        assert len(response.items) == 1
+        assert response.items[0].variant_id == "var-1"
 
     def test_inventory_list_response_multiple_items(self):
         """Test InventoryListResponse with multiple items."""
         data = {
-            "inventory": [
+            "inventory_levels": [
                 {
                     "variant_id": "var-1",
                     "store_id": "store-1",
@@ -70,6 +70,6 @@ class TestInventoryModel:
             ]
         }
         response = InventoryListResponse.model_validate(data)
-        assert len(response.inventory) == 2
-        assert response.inventory[0].in_stock == 10
-        assert response.inventory[1].in_stock == 20
+        assert len(response.items) == 2
+        assert response.items[0].in_stock == 10
+        assert response.items[1].in_stock == 20

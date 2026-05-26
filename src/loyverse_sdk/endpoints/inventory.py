@@ -10,6 +10,7 @@ from loyverse_sdk.models import Inventory, InventoryListResponse
 
 class InventoryEndpoint(BaseEndpoint, ListMixin, RetrieveMixin, PaginationMixin):
     path = "inventory"
+    items_key = "inventory_levels"
 
     async def list(self, limit: int = config.PAGE_LIMIT, cursor: str | None = None):
         return await super().list(

@@ -26,3 +26,6 @@ Makefile
 # Markdown files
 TODO.md
 CLAUDE.md
+AGENTS.md
+
+.planning/

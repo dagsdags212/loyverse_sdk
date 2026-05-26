@@ -7,6 +7,28 @@ An async Python SDK for the Loyverse POS API with local DuckDB data warehousing.
 
 **Core Value:** Data can be reliably pulled from the Loyverse API into local storage for analysis, with correct typing and error handling throughout.
 
+### Loyverse API
+
+The documentation for the Lovyerse API can be found [here](https://developer.loyverse.com/docs/). It consists of the following endpoints:
+
+- `/categories`
+- `/customers`
+- `/discounts`
+- `/employees`
+- `/inventory`
+- `/items`
+- `/merchant`
+- `/modifiers`
+- `/payment_types`
+- `/pos_devices`
+- `/receipts`
+- `/shifts`
+- `/stores`
+- `/suppliers`
+- `/taxes`
+- `/webhooks`
+- `/variants`
+
 ### Constraints
 
 - **Python**: 3.12+ (already enforced via `.python-version`)

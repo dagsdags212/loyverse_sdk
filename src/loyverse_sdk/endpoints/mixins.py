@@ -35,7 +35,7 @@ class ListMixin:
                 raise ValidationError(
                     message=str(e),
                     validation_errors=e.errors(),
-                    model_name=model.__name__
+                    model_name=model.__name__,
                 )
 
         return data
@@ -56,7 +56,7 @@ class RetrieveMixin:
                 raise ValidationError(
                     message=str(e),
                     validation_errors=e.errors(),
-                    model_name=model.__name__
+                    model_name=model.__name__,
                 )
 
         return data
@@ -166,10 +166,11 @@ class PaginationMixin(Generic[T]):
                     f"Expected dict response for pagination, got {type(resp).__name__}"
                 )
 
-            records = resp.get(self.path)
+            items_key = getattr(self, "items_key", None) or self.path
+            records = resp.get(items_key)
             if records is None:
                 raise PaginationError(
-                    f"Response missing expected key '{self.path}' for records"
+                    f"Response missing expected key '{items_key}' for records"
                 )
 
             if not isinstance(records, list):

@@ -14,6 +14,7 @@ class CategoryColor(str, Enum):
     GREEN = "GREEN"
     BLUE = "BLUE"
     PURPLE = "PURPLE"
+    LIME = "LIME"
 
 
 class BaseCategory(BaseModel):

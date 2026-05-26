@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Completed phase-02 plan-01
-last_updated: "2026-05-25T20:52:04.631Z"
-last_activity: 2026-05-25
+last_updated: "2026-05-26T07:11:29.291Z"
+last_activity: 2026-05-26
 progress:
-  total_phases: 1
-  completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  total_phases: 2
+  completed_phases: 2
+  total_plans: 6
+  completed_plans: 6
   percent: 100
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-25)
 
 **Core value:** Data can be reliably pulled from the Loyverse API into local storage for analysis, with correct typing and error handling throughout.
-**Current focus:** Phase 03 — cover-missing-loyverse-api-endpoints-inventory
+**Current focus:** Phase 04 — services-layer-with-crud-business-logic-for-loyverse-records
 
 ## Current Position
 
-Phase: 03
+Phase: 04
 Plan: Not started
-Status: Executing Phase 03
-Last activity: 2026-05-25
+Status: Executing Phase 04
+Last activity: 2026-05-26
 
 Progress: [██████████] 100% (v1.0 complete)
 
@@ -36,7 +36,7 @@ Progress: [██████████] 100% (v1.0 complete)
 
 **Velocity:**
 
-- Total plans completed: 1
+- Total plans completed: 7
 - Average duration: —
 - Total execution time: —
 
@@ -45,7 +45,8 @@ Progress: [██████████] 100% (v1.0 complete)
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | — | — | — | — |
-| 03 | 1 | - | - |
+| 03 | 3 | - | - |
+| 04 | 3 | - | - |
 
 **Recent Trend:**
 
@@ -62,6 +63,7 @@ Progress: [██████████] 100% (v1.0 complete)
 ### Roadmap Evolution
 
 - Phase 3 added: Cover missing Loyverse API endpoints (inventory)
+- Phase 4 added: Services layer with CRUD business logic for Loyverse records
 
 ### Decisions
 
