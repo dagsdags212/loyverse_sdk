@@ -1,8 +1,6 @@
-from datetime import datetime
 from typing import AsyncGenerator, Type, TypeVar, Generic
 from pydantic import BaseModel
 from pydantic import ValidationError as PydanticValidationError
-from loyverse_sdk.utils import standardize_datetime_str
 from loyverse_sdk.core.console import console
 from loyverse_sdk.exceptions import ValidationError, PaginationError
 
@@ -11,21 +9,15 @@ T = TypeVar("T")
 
 
 class ListMixin:
-    """Mixin for retrieving a single page of records"""
+    """Mixin for retrieving a single page of records."""
 
     path: str
 
     async def list(
         self,
-        limit: int = 50,
-        cursor: str | None = None,
         model: Type[BaseModel] | None = None,
-        **kwargs,
+        **params: object,
     ) -> dict:
-        params = {"limit": limit, **kwargs}
-        if cursor:
-            params["cursor"] = cursor
-
         data = await self._get(self.path, params=params)
         if model:
             try:
@@ -103,40 +95,24 @@ class DeleteMixin:
 
 
 class PaginationMixin(Generic[T]):
-    """Mixin for retrieving records across multiple pages"""
+    """Mixin for retrieving records across multiple pages."""
 
     path: str
 
     async def list_paginated(
         self,
         limit: int = 250,
-        created_at_min: datetime | None = None,
-        created_at_max: datetime | None = None,
-        updated_at_min: datetime | None = None,
-        updated_at_max: datetime | None = None,
-        cursor: str | None = None,
+        **params: object,
     ) -> dict:
-        params = {"limit": limit}
-        if cursor:
-            params["cursor"] = cursor
-        if created_at_min:
-            params["created_at_min"] = standardize_datetime_str(created_at_min)
-        if created_at_max:
-            params["created_at_max"] = standardize_datetime_str(created_at_max)
-        if updated_at_min:
-            params["updated_at_min"] = standardize_datetime_str(updated_at_min)
-        if updated_at_max:
-            params["updated_at_max"] = standardize_datetime_str(updated_at_max)
-
-        return await self._get(self.path, params=params)
+        default_params = {"limit": limit}
+        if params:
+            default_params.update(params)
+        return await self._get(self.path, params=default_params)
 
     async def iter_all(
         self,
         limit: int = 250,
-        created_at_min: datetime | None = None,
-        created_at_max: datetime | None = None,
-        updated_at_min: datetime | None = None,
-        updated_at_max: datetime | None = None,
+        **params: object,
     ) -> AsyncGenerator[T, None]:
         """
         Async generator to iterate over all items across all pages.
@@ -148,17 +124,14 @@ class PaginationMixin(Generic[T]):
             PaginationError: If pagination metadata is missing or invalid
         """
         cursor = None
-        seen_cursors = set()
+        seen_cursors: set[str] = set()
 
         while True:
-            resp = await self.list_paginated(
-                cursor=cursor,
-                limit=limit,
-                created_at_min=created_at_min,
-                created_at_max=created_at_max,
-                updated_at_min=updated_at_min,
-                updated_at_max=updated_at_max,
-            )
+            call_params: dict[str, object] = {"limit": limit, **params}
+            if cursor:
+                call_params["cursor"] = cursor
+
+            resp = await self.list_paginated(**call_params)
 
             # Validate response structure
             if not isinstance(resp, dict):
