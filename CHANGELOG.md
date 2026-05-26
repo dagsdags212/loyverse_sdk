@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2025-05-27
+
+### Added
+- **Typed query models for all list endpoints** — 15 `FooListQuery` classes (e.g. `CustomerListQuery`, `ReceiptListQuery`, `InventoryListQuery`) each with endpoint-specific filter fields and validation
+- **`BaseListQuery`** — Base class providing `limit` (1–250), `cursor`, `created_at_min/max`, `updated_at_min/max` with `model_validator` enforcing `min <= max` date ranges and `limit` bounds
+- **`to_params()` serialization** — All query models expose `to_params()` which serializes datetime fields to ISO 8601 strings and excludes `None` values; `show_deleted` serializes as lowercase `"true"` string for API compatibility
+- **Webhook query model** — `WebhookListQuery` with typed `type` (`WebhookType` enum) and `status` (`WebhookStatus` enum) fields that serialize to their `.value` strings; `merchant_id` maps to `merchant_it` per Loyverse API spec
+- **84 new unit tests** covering all query model classes, `BaseListQuery` validators, and `to_params()` serialization
+
+### Changed
+- **All 14 list endpoint signatures** — `list(query: FooListQuery | None = None)` and `iter_all(query: FooListQuery | None = None)` replace the previous `list(limit=..., cursor=..., **kwargs)` pattern; endpoints with endpoint-specific filters (inventory, receipts, customers, items) no longer need manual `params` dict building
+- **`ListMixin.list()`** — Now accepts `model` + `**params` instead of hardcoded `limit`/`cursor` kwargs; params passed directly to `_get()`
+- **`PaginationMixin.list_paginated()` and `iter_all()`** — No longer hardcode `created_at_min/max`/`updated_at_min/max`; accept `**params` and pass through to `_get()`; datetime standardization now handled at query model call site via `to_params()`
+- **Endpoint-specific filter fields** — Store ID, variant IDs, receipt number ranges, order direction, and all ID-filter parameters now live on their respective query models instead of being manually forwarded via kwargs in endpoint methods
+
+### Fixed
+- **`PaginationMixin.iter_all()`** — Previously hardcoded date filters meant `DuckDBExporter.export_resource()` passed `created_at_min/max` to endpoints that don't support them (e.g. `pos_devices`); now all params flow from query model so only relevant fields reach each endpoint
+
 ## [0.1.0] - 2025-05-26
 
 ### Added
