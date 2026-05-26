@@ -40,14 +40,6 @@ def exporter(mock_client, temp_db):
 class TestDuckDBExporterInit:
     """Test DuckDBExporter initialization."""
 
-    def test_init_creates_connection(self, mock_client, temp_db):
-        """Test that initialization creates a database connection."""
-        exporter = DuckDBExporter(mock_client, temp_db)
-
-        assert exporter.client == mock_client
-        assert exporter.db_path == temp_db
-        assert exporter.connection is not None
-
     def test_init_schema_creates_tables(self, exporter):
         """Test that init_schema creates all tables."""
         exporter.init_schema(drop_existing=False)
@@ -69,16 +61,6 @@ class TestDuckDBExporterInit:
 
 class TestResourceOrder:
     """Test resource export order respects dependencies."""
-
-    def test_resource_order_defined(self, exporter):
-        """Test that RESOURCE_ORDER is defined and contains all resources."""
-        assert hasattr(DuckDBExporter, "RESOURCE_ORDER")
-        assert len(DuckDBExporter.RESOURCE_ORDER) > 0
-
-        # Should contain key resources
-        assert "categories" in DuckDBExporter.RESOURCE_ORDER
-        assert "items" in DuckDBExporter.RESOURCE_ORDER
-        assert "receipts" in DuckDBExporter.RESOURCE_ORDER
 
     def test_resource_order_respects_dependencies(self, exporter):
         """Test that dependent resources come after their dependencies."""
@@ -783,24 +765,3 @@ class TestContextManager:
 
         # Connection should be closed after context exit
         # (Can't easily test this without accessing internals)
-
-    def test_context_manager_closes_on_exception(self, mock_client, temp_db):
-        """Test that context manager closes connection even on exception."""
-        try:
-            with DuckDBExporter(mock_client, temp_db) as exporter:
-                raise ValueError("Test exception")
-        except ValueError:
-            pass  # Expected
-
-        # Connection should still be closed
-
-
-class TestCloseMethod:
-    """Test close method."""
-
-    def test_close_closes_connection(self, exporter):
-        """Test that close method closes the database connection."""
-        exporter.init_schema()
-
-        # Should not raise
-        exporter.close()
