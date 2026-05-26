@@ -1,7 +1,10 @@
 import json
 from datetime import datetime
-from typing import Callable, Mapping, Optional
+from pathlib import Path
+from typing import Callable, Mapping, Optional, Sequence
 import httpx
+from pydantic import BaseModel
+
 from loyverse_sdk.auth import Auth
 from loyverse_sdk.core.config import config
 from loyverse_sdk.exceptions import (
@@ -338,3 +341,88 @@ class LoyverseClient:
         from loyverse_sdk.db.schema_builder import create_duckdb_schema
 
         create_duckdb_schema(db_path, drop_existing=drop_existing)
+
+    # ========================================================================
+    # FLAT-FILE EXPORT METHODS
+    # ========================================================================
+
+    def export_to_csv(self, data: Sequence[BaseModel], filepath: str | Path) -> None:
+        """
+        Export a list of Pydantic model instances to a CSV file.
+
+        Convenience method that delegates to the ``exporters.export_csv``
+        function. Uses lazy import so Polars is only loaded when flat-file
+        export is actually used (consistent with the DuckDB lazy import
+        pattern).
+
+        Uses Polars default CSV settings: comma delimiter, double-quote
+        quoting, UTF-8 encoding, headers included.
+
+        Args:
+            data: A sequence of Pydantic model instances to export.
+            filepath: Destination file path (``str`` or ``pathlib.Path``).
+
+        Raises:
+            ExportError: If the file cannot be written.
+
+        Example:
+            client = LoyverseClient()
+
+            # Query and filter data through endpoint methods
+            customers_resp = await client.customers.list(
+                updated_since="2026-01-01T00:00:00Z"
+            )
+            jan_feb = [
+                c for c in customers_resp.items
+                if c.created_at
+                and c.created_at.year == 2026
+                and c.created_at.month in (1, 2)
+            ]
+
+            # Export filtered list to CSV
+            client.export_to_csv(jan_feb, "customers_jan_feb_2026.csv")
+            print(f"Exported {len(jan_feb)} customers to CSV")
+
+            await client.close()
+        """
+        from loyverse_sdk.exporters import export_csv
+
+        return export_csv(data, filepath)
+
+    def export_to_parquet(
+        self, data: Sequence[BaseModel], filepath: str | Path
+    ) -> None:
+        """
+        Export a list of Pydantic model instances to a Parquet file.
+
+        Convenience method that delegates to the ``exporters.export_parquet``
+        function. Uses lazy import so Polars is only loaded when flat-file
+        export is actually used (consistent with the DuckDB lazy import
+        pattern).
+
+        Uses Snappy compression (Polars default for Parquet).
+
+        Args:
+            data: A sequence of Pydantic model instances to export.
+            filepath: Destination file path (``str`` or ``pathlib.Path``).
+
+        Raises:
+            ExportError: If the file cannot be written.
+
+        Example:
+            client = LoyverseClient()
+
+            # Stream all items via async pagination
+            items = []
+            async for page in client.items.iter_all(limit=250):
+                items.append(page)
+
+            # Export full catalog to Parquet
+            client.export_to_parquet(items, "items_full.parquet")
+            print(f"Exported {len(items)} items to Parquet")
+
+            await client.close()
+        """
+        from loyverse_sdk.exporters import export_parquet
+
+        return export_parquet(data, filepath)
