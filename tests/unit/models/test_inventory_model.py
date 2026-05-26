@@ -73,3 +73,34 @@ class TestInventoryModel:
         assert len(response.items) == 2
         assert response.items[0].in_stock == 10
         assert response.items[1].in_stock == 20
+
+    def test_list_response_with_cursor(self):
+        """Test InventoryListResponse exposes next_cursor from cursor field."""
+        data = {
+            "inventory_levels": [
+                {
+                    "variant_id": "var-1",
+                    "store_id": "store-1",
+                    "in_stock": 50,
+                    "updated_at": "2026-05-26T10:00:00Z",
+                }
+            ],
+            "cursor": "next-page-token",
+        }
+        response = InventoryListResponse.model_validate(data)
+        assert response.next_cursor == "next-page-token"
+
+    def test_list_response_without_cursor(self):
+        """Test InventoryListResponse defaults next_cursor to None."""
+        data = {
+            "inventory_levels": [
+                {
+                    "variant_id": "var-1",
+                    "store_id": "store-1",
+                    "in_stock": 50,
+                    "updated_at": "2026-05-26T10:00:00Z",
+                }
+            ]
+        }
+        response = InventoryListResponse.model_validate(data)
+        assert response.next_cursor is None
