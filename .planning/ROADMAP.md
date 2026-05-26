@@ -14,7 +14,7 @@
 | 02 | Test Fixes & Verification | ✅ COMPLETE | 1 | 3 | 8 test files fixed, all 25 model tests pass |
 | 03 | Cover Missing Loyverse API Endpoints (Inventory) | 📋 PLANNED | 0 | 0 | Add inventory endpoint coverage to SDK |
 | 04 | Services Layer with CRUD Business Logic | 🔄 IN PROGRESS | 0+ | — | Business logic layer for Loyverse records |
-| 05 | Test Suite Optimization | 📋 PLANNED | 1 | 3 | Fix 16 failing tests, prune non-essential tests, all pass cleanly |
+| 05 | Test Suite Optimization | ✅ COMPLETE | 1 | 3 | 123 tests pass, pyarrow added, non-essential tests pruned |
 
 ---
 
@@ -62,15 +62,21 @@ Scope: Build a services layer that provides CRUD business logic abstractions on 
 
 ---
 
-## Phase 05: Test Suite Optimization 📋
+## Phase 05: Test Suite Optimization ✅
 
-**Status:** PLANNED — Ready for execution
-**Artifacts:** CONTEXT.md, 05-01-PLAN.md
+**Status:** COMPLETE — Shipped 2026-05-26
+**Artifacts:** CONTEXT.md, 05-01-PLAN.md, 05-01-SUMMARY.md
 
-**Plans:** 1 plan
-- [ ] 05-01-PLAN.md — Fix 16 failing tests (pyarrow dependency, connection lifecycle, test data, mocks), prune 8 non-essential tests, verify all pass
+**Plans:** 1/1 plans complete
+- [x] 05-01-PLAN.md — Fix 16 failing tests, prune 9 non-essential tests, verify all pass
 
-Scope: Fix all 16 failing tests (missing pyarrow, connection lifecycle bugs, test data issues, mock problems), then prune non-essential tests (DuckDB-internal, duplicate coverage, overly weak assertions) from ~132 down to ~122 while keeping all SDK-logic coverage intact.
+Delivered:
+- Added `pyarrow>=15.0.0` dependency to fix Polars→Arrow conversion errors
+- Fixed connection lifecycle bugs in 4 tests (raw `conn.close()` → `cursor()` context manager)
+- Completed test data columns to match DuckDB table schemas
+- Fixed merchant mock and exception handling in export mocks
+- Pruned 9 non-essential tests (3 DuckDB-internal, 2 duplicate, 4 overly weak)
+- Result: 123/123 tests pass (0 failures, 0 errors)
 
 ---
 
@@ -81,4 +87,4 @@ See `.planning/REQUIREMENTS.md` for detailed requirement-to-phase mapping.
 ---
 
 *Last updated: 2026-05-26*
-*Next action: `/gsd-execute-phase 05` to execute the test suite optimization plan*
+*Next action: `/gsd-execute-phase 03` to implement inventory API endpoints, or `/gsd-execute-phase 04` to continue services layer*
