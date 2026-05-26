@@ -4,11 +4,15 @@ from loyverse_sdk.endpoints.mixins import (
     ListMixin,
     RetrieveMixin,
     PaginationMixin,
+    CreateMixin,
+    UpdateMixin,
 )
 from loyverse_sdk.models import Modifier, ModifierListResponse
 
 
-class ModifiersEndpoint(BaseEndpoint, ListMixin, RetrieveMixin, PaginationMixin):
+class ModifiersEndpoint(
+    BaseEndpoint, ListMixin, RetrieveMixin, PaginationMixin, CreateMixin, UpdateMixin
+):
     path = "modifiers"
 
     async def create(self, payload: dict):
