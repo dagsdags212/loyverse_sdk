@@ -6,9 +6,6 @@ dist/
 wheels/
 *.egg-info
 
-# Misc. scripts
-main.py
-app.py
 
 # Command runners
 justfile
