@@ -115,12 +115,11 @@ async def test_sync_metadata_tracking(temp_db):
     exporter.init_schema()
 
     # Manually insert some sync metadata
-    conn = exporter.connection.connect()
-    conn.execute("""
-        INSERT INTO sync_metadata (resource_name, last_sync_at, records_count, sync_type)
-        VALUES ('categories', CURRENT_TIMESTAMP, 100, 'full')
-    """)
-    conn.close()
+    with exporter.connection.cursor() as conn:
+        conn.execute("""
+            INSERT INTO sync_metadata (resource_name, last_sync_at, records_count, sync_type)
+            VALUES ('categories', CURRENT_TIMESTAMP, 100, 'full')
+        """)
 
     # Retrieve metadata
     metadata = exporter.get_sync_metadata()
@@ -268,14 +267,24 @@ async def test_child_table_relationships(temp_db):
         VALUES ('item1', 'Item 1', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     """)
 
+    # Insert variant records for the receipt line items
+    conn.execute("""
+        INSERT INTO variants (id, item_id, sku, cost, default_pricing_type, created_at, updated_at)
+        VALUES ('variant1', 'item1', 'SKU001', 0.0, 'DEFAULT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    """)
+    conn.execute("""
+        INSERT INTO variants (id, item_id, sku, cost, default_pricing_type, created_at, updated_at)
+        VALUES ('variant2', 'item1', 'SKU002', 0.0, 'DEFAULT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    """)
+
     # Insert line items
     conn.execute("""
         INSERT INTO receipt_line_items (
-            id, receipt_id, item_id, name, quantity, price, cost
+            id, receipt_id, item_id, variant_id, name, quantity, price, cost
         )
         VALUES
-            ('line1', 'rec1', 'item1', 'Coffee', 2, 10.0, 5.0),
-            ('line2', 'rec1', 'item1', 'Tea', 1, 8.0, 4.0)
+            ('line1', 'rec1', 'item1', 'variant1', 'Coffee', 2, 10.0, 5.0),
+            ('line2', 'rec1', 'item1', 'variant2', 'Tea', 1, 8.0, 4.0)
     """)
 
     # Verify parent-child relationship via JOIN
@@ -313,7 +322,9 @@ async def test_upsert_behavior(temp_db):
     """)
 
     # Verify initial data
-    result = conn.execute("SELECT name, color FROM categories WHERE id = 'cat1'").fetchone()
+    result = conn.execute(
+        "SELECT name, color FROM categories WHERE id = 'cat1'"
+    ).fetchone()
     assert result[0] == "Original Name"
     assert result[1] == "RED"
 
@@ -324,7 +335,9 @@ async def test_upsert_behavior(temp_db):
     """)
 
     # Verify update
-    result = conn.execute("SELECT name, color FROM categories WHERE id = 'cat1'").fetchone()
+    result = conn.execute(
+        "SELECT name, color FROM categories WHERE id = 'cat1'"
+    ).fetchone()
     assert result[0] == "Updated Name"
     assert result[1] == "BLUE"
 

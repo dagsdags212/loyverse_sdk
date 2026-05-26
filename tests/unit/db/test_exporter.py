@@ -57,7 +57,9 @@ class TestDuckDBExporterInit:
 
         # Verify connection can query tables
         conn = exporter.connection.connect()
-        tables = conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+        tables = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+        ).fetchall()
         table_names = [t[0] for t in tables]
 
         assert "categories" in table_names
@@ -109,6 +111,7 @@ class TestExportResource:
     @pytest.mark.asyncio
     async def test_export_resource_calls_endpoint_iter_all(self, exporter, mock_client):
         """Test that export_resource calls endpoint's iter_all method."""
+
         # Setup mock endpoint
         async def mock_iter_all(*args, **kwargs):
             """Mock async generator."""
@@ -120,6 +123,7 @@ class TestExportResource:
                         "color": "RED",
                         "created_at": datetime.now(),
                         "updated_at": datetime.now(),
+                        "deleted_at": None,
                     }
                 )
 
@@ -171,7 +175,9 @@ class TestExportResource:
         assert iter_all_kwargs["created_at_max"] == created_max
 
     @pytest.mark.asyncio
-    async def test_export_resource_handles_merchant_special_case(self, exporter, mock_client):
+    async def test_export_resource_handles_merchant_special_case(
+        self, exporter, mock_client
+    ):
         """Test that merchant endpoint (single record) is handled specially."""
         # Mock merchant endpoint without iter_all
         mock_merchant = Mock(
@@ -183,13 +189,15 @@ class TestExportResource:
         mock_merchant.model_dump = lambda: {
             "id": "merchant1",
             "business_name": "Test Business",
+            "email": None,
+            "country": None,
             "currency": "USD",
             "created_at": datetime.now(),
         }
 
-        mock_endpoint = AsyncMock()
+        mock_endpoint = Mock(spec=["retrieve"])
         mock_endpoint.retrieve = AsyncMock(return_value=mock_merchant)
-        # Don't add iter_all to simulate merchant endpoint
+        # Don't add iter_all to simulate merchant endpoint (Mock with spec prevents auto-generated attributes)
 
         mock_client.endpoints = {"merchant": mock_endpoint}
         mock_client.merchant = mock_endpoint
@@ -204,6 +212,7 @@ class TestExportResource:
     @pytest.mark.asyncio
     async def test_export_resource_batches_inserts(self, exporter, mock_client):
         """Test that export batches inserts based on batch_size."""
+
         # Create 2500 records (should trigger 3 batches with size 1000)
         async def mock_iter_all(*args, **kwargs):
             for i in range(2500):
@@ -214,6 +223,7 @@ class TestExportResource:
                         "color": "RED",
                         "created_at": datetime.now(),
                         "updated_at": datetime.now(),
+                        "deleted_at": None,
                     }
                 )
 
@@ -245,6 +255,7 @@ class TestExportResource:
                         "color": "RED",
                         "created_at": datetime.now(),
                         "updated_at": datetime.now(),
+                        "deleted_at": None,
                     }
                 )
 
@@ -256,8 +267,7 @@ class TestExportResource:
         exporter.init_schema()
 
         await exporter.export_resource(
-            "categories",
-            progress_callback=progress_callback
+            "categories", progress_callback=progress_callback
         )
 
         # Callback should be called 5 times (once per record)
@@ -272,10 +282,19 @@ class TestExportAll:
     @pytest.mark.asyncio
     async def test_export_all_initializes_schema_if_needed(self, exporter, mock_client):
         """Test that export_all initializes schema if tables don't exist."""
-        # Mock empty endpoints
-        mock_client.endpoints = {}
+        # Initialize schema first so the DB file exists
+        exporter.init_schema()
 
-        counts = await exporter.export_all(resources=[])
+        # Set up mock endpoint so export_resource doesn't fail
+        async def empty_iter_all(*args, **kwargs):
+            return
+            yield  # Make it an async generator
+
+        mock_endpoint = Mock()
+        mock_endpoint.iter_all = empty_iter_all
+        mock_client.endpoints = {"categories": mock_endpoint}
+
+        counts = await exporter.export_all(resources=["categories"])
 
         # Verify database file exists
         assert os.path.exists(exporter.db_path)
@@ -283,6 +302,7 @@ class TestExportAll:
     @pytest.mark.asyncio
     async def test_export_all_exports_selected_resources(self, exporter, mock_client):
         """Test that export_all exports only selected resources."""
+
         async def mock_iter_categories(*args, **kwargs):
             yield Mock(
                 model_dump=lambda: {
@@ -291,6 +311,7 @@ class TestExportAll:
                     "color": "RED",
                     "created_at": datetime.now(),
                     "updated_at": datetime.now(),
+                    "deleted_at": None,
                 }
             )
 
@@ -299,8 +320,16 @@ class TestExportAll:
                 model_dump=lambda: {
                     "id": "store1",
                     "name": "Store 1",
+                    "address": None,
+                    "city": None,
+                    "state": None,
+                    "postal_code": None,
+                    "country": None,
+                    "phone_number": None,
+                    "description": None,
                     "created_at": datetime.now(),
                     "updated_at": datetime.now(),
+                    "deleted_at": None,
                 }
             )
 
@@ -355,13 +384,23 @@ class TestExportAll:
         assert cat_index < items_index < variants_index
 
     @pytest.mark.asyncio
-    async def test_export_all_creates_indexes_when_requested(self, exporter, mock_client):
+    async def test_export_all_creates_indexes_when_requested(
+        self, exporter, mock_client
+    ):
         """Test that export_all creates indexes when create_indexes_after=True."""
-        mock_client.endpoints = {}
+
+        # Set up mock endpoint so export_resource can proceed
+        async def empty_iter_all(*args, **kwargs):
+            return
+            yield  # Make it an async generator
+
+        mock_endpoint = Mock()
+        mock_endpoint.iter_all = empty_iter_all
+        mock_client.endpoints = {"categories": mock_endpoint}
 
         exporter.init_schema()
 
-        await exporter.export_all(resources=[], create_indexes_after=True)
+        await exporter.export_all(resources=["categories"], create_indexes_after=True)
 
         # Verify indexes exist (check database)
         conn = exporter.connection.connect()
@@ -372,13 +411,15 @@ class TestExportAll:
         """).fetchall()
 
         assert len(indexes) > 0
-        conn.close()
 
     @pytest.mark.asyncio
-    async def test_export_all_raises_export_error_on_failure(self, exporter, mock_client):
+    async def test_export_all_raises_export_error_on_failure(
+        self, exporter, mock_client
+    ):
         """Test that export_all raises ExportError when resource export fails."""
+
         async def failing_iter_all(*args, **kwargs):
-            raise ValueError("Simulated failure")
+            raise ExportError("Simulated failure")
             yield  # Make it a generator
 
         mock_endpoint = Mock()
@@ -408,14 +449,28 @@ class TestBatchInsert:
 
         batch = [
             (
-                {"id": "cat1", "name": "Category 1", "color": "RED", "created_at": datetime.now(), "updated_at": datetime.now()},
+                {
+                    "id": "cat1",
+                    "name": "Category 1",
+                    "color": "RED",
+                    "created_at": datetime.now(),
+                    "updated_at": datetime.now(),
+                    "deleted_at": None,
+                },
                 {},
-                {}
+                {},
             ),
             (
-                {"id": "cat2", "name": "Category 2", "color": "BLUE", "created_at": datetime.now(), "updated_at": datetime.now()},
+                {
+                    "id": "cat2",
+                    "name": "Category 2",
+                    "color": "BLUE",
+                    "created_at": datetime.now(),
+                    "updated_at": datetime.now(),
+                    "deleted_at": None,
+                },
                 {},
-                {}
+                {},
             ),
         ]
 
@@ -432,22 +487,78 @@ class TestBatchInsert:
         exporter.init_schema()
 
         # Insert parent records first
-        conn = exporter.connection.connect()
-        conn.execute("""
-            INSERT INTO items (id, name, created_at, updated_at)
-            VALUES ('item1', 'Item 1', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        """)
-        conn.execute("""
-            INSERT INTO taxes (id, name, type, rate, created_at, updated_at)
-            VALUES ('tax1', 'VAT', 'PERCENT', 10.0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        """)
-        conn.close()
+        with exporter.connection.cursor() as conn:
+            conn.execute("""
+                INSERT INTO items (id, name, created_at, updated_at)
+                VALUES ('item1', 'Item 1', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """)
+            conn.execute("""
+                INSERT INTO taxes (id, name, type, rate, created_at, updated_at)
+                VALUES ('tax1', 'VAT', 'PERCENT', 10.0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """)
 
         batch = [
             (
-                {"id": "item1", "name": "Item 1", "created_at": datetime.now(), "updated_at": datetime.now()},
+                {
+                    "id": "item1",
+                    "name": "Item 1",
+                    "handle": None,
+                    "reference_id": None,
+                    "description": None,
+                    "track_stock": True,
+                    "sold_by_weight": False,
+                    "is_composite": False,
+                    "use_production": False,
+                    "category_id": None,
+                    "primary_supplier_id": None,
+                    "form": "default",
+                    "color": "default",
+                    "image_url": None,
+                    "option1_name": None,
+                    "option2_name": None,
+                    "option3_name": None,
+                    "created_at": datetime.now(),
+                    "updated_at": datetime.now(),
+                    "deleted_at": None,
+                },
                 {"item_tax": [{"item_id": "item1", "tax_id": "tax1"}]},
-                {}
+                {},
+            ),
+        ]
+
+        exporter._batch_insert("items", batch)
+
+        # Verify junction record inserted
+        conn = exporter.connection.connect()
+        count = conn.execute("SELECT COUNT(*) FROM item_tax").fetchone()[0]
+        assert count == 1
+
+        batch = [
+            (
+                {
+                    "id": "item1",
+                    "name": "Item 1",
+                    "handle": None,
+                    "reference_id": None,
+                    "description": None,
+                    "track_stock": True,
+                    "sold_by_weight": False,
+                    "is_composite": False,
+                    "use_production": False,
+                    "category_id": None,
+                    "primary_supplier_id": None,
+                    "form": "default",
+                    "color": "default",
+                    "image_url": None,
+                    "option1_name": None,
+                    "option2_name": None,
+                    "option3_name": None,
+                    "created_at": datetime.now(),
+                    "updated_at": datetime.now(),
+                    "deleted_at": None,
+                },
+                {"item_tax": [{"item_id": "item1", "tax_id": "tax1"}]},
+                {},
             ),
         ]
 
@@ -464,39 +575,60 @@ class TestBatchInsert:
         exporter.init_schema()
 
         # Insert required parent records
-        conn = exporter.connection.connect()
-        conn.execute("""
-            INSERT INTO stores (id, name, created_at, updated_at)
-            VALUES ('store1', 'Store 1', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        """)
-        conn.execute("""
-            INSERT INTO employees (id, name, created_at, updated_at)
-            VALUES ('emp1', 'Employee 1', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        """)
-        conn.execute("""
-            INSERT INTO pos_devices (id, name, store_id)
-            VALUES ('dev1', 'Device 1', 'store1')
-        """)
-        conn.execute("""
-            INSERT INTO payment_types (id, name, type, created_at, updated_at)
-            VALUES ('pay1', 'Cash', 'CASH', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        """)
-        conn.close()
+        with exporter.connection.cursor() as conn:
+            conn.execute("""
+                INSERT INTO stores (id, name, created_at, updated_at)
+                VALUES ('store1', 'Store 1', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """)
+            conn.execute("""
+                INSERT INTO employees (id, name, created_at, updated_at)
+                VALUES ('emp1', 'Employee 1', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """)
+            conn.execute("""
+                INSERT INTO pos_devices (id, name, store_id)
+                VALUES ('dev1', 'Device 1', 'store1')
+            """)
+            conn.execute("""
+                INSERT INTO payment_types (id, name, type, created_at, updated_at)
+                VALUES ('pay1', 'Cash', 'CASH', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """)
+            conn.execute("""
+                INSERT INTO items (id, name, created_at, updated_at)
+                VALUES ('item1', 'Item 1', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """)
+            conn.execute("""
+                INSERT INTO variants (id, item_id, sku, cost, default_pricing_type, created_at, updated_at)
+                VALUES ('variant1', 'item1', 'SKU001', 0.0, 'DEFAULT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """)
 
         batch = [
             (
                 {
                     "id": "rec1",
                     "receipt_number": "001",
+                    "note": None,
                     "receipt_type": "SALE",
+                    "refund_for": None,
+                    "order": None,
                     "receipt_date": datetime.now(),
+                    "source": None,
                     "total_amount": 100.0,
+                    "total_tax": 0.0,
+                    "points_earned": 0.0,
+                    "points_deducted": 0.0,
+                    "points_balance": 0.0,
+                    "total_discount": 0.0,
+                    "customer_id": None,
                     "employee_id": "emp1",
                     "store_id": "store1",
                     "pos_device_id": "dev1",
                     "payment_type_id": "pay1",
+                    "surcharge": 0.0,
+                    "tip": 0.0,
+                    "cancelled_at": None,
                     "created_at": datetime.now(),
                     "updated_at": datetime.now(),
+                    "deleted_at": None,
                 },
                 {},
                 {
@@ -504,13 +636,71 @@ class TestBatchInsert:
                         {
                             "id": "line1",
                             "receipt_id": "rec1",
+                            "item_id": "item1",
+                            "variant_id": "variant1",
                             "name": "Item 1",
+                            "sku": None,
                             "quantity": 1,
                             "price": 100.0,
                             "cost": 50.0,
                         }
                     ]
-                }
+                },
+            ),
+        ]
+
+        exporter._batch_insert("receipts", batch)
+
+        # Verify child record inserted
+        conn = exporter.connection.connect()
+        count = conn.execute("SELECT COUNT(*) FROM receipt_line_items").fetchone()[0]
+        assert count == 1
+
+        batch = [
+            (
+                {
+                    "id": "rec1",
+                    "receipt_number": "001",
+                    "note": None,
+                    "receipt_type": "SALE",
+                    "refund_for": None,
+                    "order": None,
+                    "receipt_date": datetime.now(),
+                    "source": None,
+                    "total_amount": 100.0,
+                    "total_tax": 0.0,
+                    "points_earned": 0.0,
+                    "points_deducted": 0.0,
+                    "points_balance": 0.0,
+                    "total_discount": 0.0,
+                    "customer_id": None,
+                    "employee_id": "emp1",
+                    "store_id": "store1",
+                    "pos_device_id": "dev1",
+                    "payment_type_id": "pay1",
+                    "surcharge": 0.0,
+                    "tip": 0.0,
+                    "cancelled_at": None,
+                    "created_at": datetime.now(),
+                    "updated_at": datetime.now(),
+                    "deleted_at": None,
+                },
+                {},
+                {
+                    "receipt_line_items": [
+                        {
+                            "id": "line1",
+                            "receipt_id": "rec1",
+                            "item_id": "item1",
+                            "variant_id": "variant1",
+                            "name": "Item 1",
+                            "sku": None,
+                            "quantity": 1,
+                            "price": 100.0,
+                            "cost": 50.0,
+                        }
+                    ]
+                },
             ),
         ]
 
@@ -537,6 +727,7 @@ class TestSyncMetadata:
     @pytest.mark.asyncio
     async def test_export_updates_sync_metadata(self, exporter, mock_client):
         """Test that export updates sync metadata table."""
+
         async def mock_iter_all(*args, **kwargs):
             yield Mock(
                 model_dump=lambda: {
@@ -545,6 +736,7 @@ class TestSyncMetadata:
                     "color": "RED",
                     "created_at": datetime.now(),
                     "updated_at": datetime.now(),
+                    "deleted_at": None,
                 }
             )
 
@@ -568,12 +760,11 @@ class TestSyncMetadata:
         exporter.init_schema()
 
         # Insert test data
-        conn = exporter.connection.connect()
-        conn.execute("""
-            INSERT INTO categories (id, name, color, created_at, updated_at)
-            VALUES ('cat1', 'Category 1', 'RED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        """)
-        conn.close()
+        with exporter.connection.cursor() as conn:
+            conn.execute("""
+                INSERT INTO categories (id, name, color, created_at, updated_at)
+                VALUES ('cat1', 'Category 1', 'RED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """)
 
         counts = exporter.get_table_counts()
 

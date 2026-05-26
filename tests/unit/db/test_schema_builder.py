@@ -65,14 +65,27 @@ class TestSchemaCreation:
         create_duckdb_schema(temp_db, drop_existing=False)
 
         conn = duckdb.connect(temp_db)
-        tables = conn.execute("SELECT table_name FROM information_schema.tables WHERE table_schema='main'").fetchall()
+        tables = conn.execute(
+            "SELECT table_name FROM information_schema.tables WHERE table_schema='main'"
+        ).fetchall()
         table_names = [t[0] for t in tables]
 
         # Check main tables exist
         expected_main_tables = [
-            "categories", "stores", "suppliers", "taxes", "modifiers",
-            "discounts", "employees", "customers", "pos_devices",
-            "payment_types", "items", "variants", "receipts", "merchant"
+            "categories",
+            "stores",
+            "suppliers",
+            "taxes",
+            "modifiers",
+            "discounts",
+            "employees",
+            "customers",
+            "pos_devices",
+            "payment_types",
+            "items",
+            "variants",
+            "receipts",
+            "merchant",
         ]
 
         for table in expected_main_tables:
@@ -85,13 +98,21 @@ class TestSchemaCreation:
         create_duckdb_schema(temp_db, drop_existing=False)
 
         conn = duckdb.connect(temp_db)
-        tables = conn.execute("SELECT table_name FROM information_schema.tables WHERE table_schema='main'").fetchall()
+        tables = conn.execute(
+            "SELECT table_name FROM information_schema.tables WHERE table_schema='main'"
+        ).fetchall()
         table_names = [t[0] for t in tables]
 
         # Check junction tables exist
         expected_junction_tables = [
-            "employee_store", "item_tax", "item_modifier", "modifier_store",
-            "tax_store", "discount_store", "payment_type_store", "variant_store"
+            "employee_store",
+            "item_tax",
+            "item_modifier",
+            "modifier_store",
+            "tax_store",
+            "discount_store",
+            "payment_type_store",
+            "variant_store",
         ]
 
         for table in expected_junction_tables:
@@ -104,7 +125,9 @@ class TestSchemaCreation:
         create_duckdb_schema(temp_db, drop_existing=False)
 
         conn = duckdb.connect(temp_db)
-        tables = conn.execute("SELECT table_name FROM information_schema.tables WHERE table_schema='main'").fetchall()
+        tables = conn.execute(
+            "SELECT table_name FROM information_schema.tables WHERE table_schema='main'"
+        ).fetchall()
         table_names = [t[0] for t in tables]
 
         # Check child tables exist
@@ -120,7 +143,9 @@ class TestSchemaCreation:
         create_duckdb_schema(temp_db, drop_existing=False)
 
         conn = duckdb.connect(temp_db)
-        tables = conn.execute("SELECT table_name FROM information_schema.tables WHERE table_schema='main'").fetchall()
+        tables = conn.execute(
+            "SELECT table_name FROM information_schema.tables WHERE table_schema='main'"
+        ).fetchall()
         table_names = [t[0] for t in tables]
 
         assert "sync_metadata" in table_names, "Metadata table not found"
@@ -162,7 +187,14 @@ class TestTableStructure:
         columns = conn.execute("PRAGMA table_info(categories)").fetchall()
         column_names = [col[1] for col in columns]
 
-        expected_columns = ["id", "name", "color", "created_at", "updated_at", "deleted_at"]
+        expected_columns = [
+            "id",
+            "name",
+            "color",
+            "created_at",
+            "updated_at",
+            "deleted_at",
+        ]
         for col in expected_columns:
             assert col in column_names, f"Column '{col}' missing from categories"
 
@@ -176,9 +208,18 @@ class TestTableStructure:
         column_names = [col[1] for col in columns]
 
         expected_columns = [
-            "id", "receipt_number", "receipt_type", "receipt_date",
-            "total_amount", "customer_id", "employee_id", "store_id",
-            "pos_device_id", "payment_type_id", "created_at", "updated_at"
+            "id",
+            "receipt_number",
+            "receipt_type",
+            "receipt_date",
+            "total_amount",
+            "customer_id",
+            "employee_id",
+            "store_id",
+            "pos_device_id",
+            "payment_type_id",
+            "created_at",
+            "updated_at",
         ]
 
         for col in expected_columns:
@@ -194,12 +235,21 @@ class TestTableStructure:
         column_names = [col[1] for col in columns]
 
         expected_columns = [
-            "id", "receipt_id", "item_id", "variant_id",
-            "name", "sku", "cost", "quantity", "price"
+            "id",
+            "receipt_id",
+            "item_id",
+            "variant_id",
+            "name",
+            "sku",
+            "cost",
+            "quantity",
+            "price",
         ]
 
         for col in expected_columns:
-            assert col in column_names, f"Column '{col}' missing from receipt_line_items"
+            assert col in column_names, (
+                f"Column '{col}' missing from receipt_line_items"
+            )
 
         conn.close()
 
@@ -303,13 +353,25 @@ class TestForeignKeys:
             )
         """)
 
+        # Insert parent items record
+        conn.execute("""
+            INSERT INTO items (id, name, created_at, updated_at)
+            VALUES ('item1', 'Test Item', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        """)
+
+        # Insert parent variant record
+        conn.execute("""
+            INSERT INTO variants (id, item_id, sku, cost, default_pricing_type, created_at, updated_at)
+            VALUES ('variant1', 'item1', 'SKU001', 0.0, 'DEFAULT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        """)
+
         # Insert line item
         conn.execute("""
             INSERT INTO receipt_line_items (
-                id, receipt_id, name, quantity, price, cost
+                id, receipt_id, item_id, variant_id, name, quantity, price, cost
             )
             VALUES (
-                'line1', 'rec1', 'Test Item', 1, 100.0, 50.0
+                'line1', 'rec1', 'item1', 'variant1', 'Test Item', 1, 100.0, 50.0
             )
         """)
 
@@ -391,7 +453,9 @@ class TestUpsertBehavior:
         """)
 
         # Verify initial insert
-        result = conn.execute("SELECT name FROM categories WHERE id = 'cat1'").fetchone()
+        result = conn.execute(
+            "SELECT name FROM categories WHERE id = 'cat1'"
+        ).fetchone()
         assert result[0] == "Original"
 
         # Insert same ID with different data (upsert)
@@ -401,7 +465,9 @@ class TestUpsertBehavior:
         """)
 
         # Verify update
-        result = conn.execute("SELECT name, color FROM categories WHERE id = 'cat1'").fetchone()
+        result = conn.execute(
+            "SELECT name, color FROM categories WHERE id = 'cat1'"
+        ).fetchone()
         assert result[0] == "Updated"
         assert result[1] == "BLUE"
 
