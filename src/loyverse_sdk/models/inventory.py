@@ -1,5 +1,6 @@
 from datetime import datetime
-from pydantic import BaseModel, Field, field_validator, field_serializer
+from pydantic import BaseModel, Field, field_validator
+from loyverse_sdk.models.common import Pagination
 
 
 class Inventory(BaseModel):
@@ -22,10 +23,6 @@ class Inventory(BaseModel):
             return local_dt
         return value
 
-    @field_serializer("variant_id", "store_id", mode="plain")
-    def serialize_str(self, value: str) -> str:
-        return value
 
-
-class InventoryListResponse(BaseModel):
+class InventoryListResponse(Pagination):
     items: list[Inventory] = Field(alias="inventory_levels")
