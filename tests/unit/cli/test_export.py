@@ -1,0 +1,93 @@
+from unittest import mock
+
+import pytest
+from typer.testing import CliRunner
+
+from loyverse_sdk.cli.main import app
+
+runner = CliRunner()
+
+
+@pytest.fixture
+def mock_run_async():
+    with mock.patch("loyverse_sdk.cli.commands.export_.run_async") as m:
+        m.side_effect = lambda fn: None
+        yield m
+
+
+class TestExportCommandValidation:
+    def test_requires_db_path(self):
+        result = runner.invoke(app, ["export"])
+        assert result.exit_code == 2  # typer error for missing required option
+
+    def test_accepts_db_path(self, mock_run_async):
+        result = runner.invoke(app, ["export", "--db-path", "test.duckdb"])
+        assert result.exit_code == 0
+
+    def test_rejects_unknown_resource(self, mock_run_async):
+        # unknown resource but db-path still required
+        result = runner.invoke(
+            app,
+            [
+                "export",
+                "--db-path",
+                "test.duckdb",
+                "--resource",
+                "unknown",
+            ],
+        )
+        assert result.exit_code == 1
+        assert "Unknown resource" in result.stdout
+
+    def test_accepts_valid_resource(self, mock_run_async):
+        result = runner.invoke(
+            app,
+            [
+                "export",
+                "--db-path",
+                "test.duckdb",
+                "--resource",
+                "receipts",
+            ],
+        )
+        assert result.exit_code == 0
+
+    def test_accepts_date_filters(self, mock_run_async):
+        result = runner.invoke(
+            app,
+            [
+                "export",
+                "--db-path",
+                "test.duckdb",
+                "--created-at-min",
+                "2024-01-01",
+                "--created-at-max",
+                "2024-12-31",
+            ],
+        )
+        assert result.exit_code == 0
+
+    def test_accepts_batch_size(self, mock_run_async):
+        result = runner.invoke(
+            app,
+            [
+                "export",
+                "--db-path",
+                "test.duckdb",
+                "--batch-size",
+                "500",
+            ],
+        )
+        assert result.exit_code == 0
+
+    def test_accepts_no_indexes(self, mock_run_async):
+        result = runner.invoke(
+            app,
+            [
+                "export",
+                "--db-path",
+                "test.duckdb",
+                "--no-indexes",
+            ],
+        )
+        assert result.exit_code == 0
