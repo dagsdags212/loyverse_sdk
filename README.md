@@ -9,6 +9,7 @@ The SDK provides:
 - **Type-safe** request/response models using Pydantic
 - **Automatic pagination** with cursor-based iteration via `iter_all()`
 - **Full CRUD operations** for supported endpoints
+- **CLI** — `loyverse` command for listing, creating, updating, deleting, and exporting resources
 - **Flat-file export** — write query results directly to CSV or Parquet files
 - **DuckDB export** — local data warehousing with relational schema
 - **16 endpoints**: categories, customers, discounts, devices, employees, inventory, items, merchant, modifiers, receipts, shifts, stores, suppliers, taxes, webhooks, variants
@@ -17,6 +18,7 @@ The SDK provides:
 
 **`src/loyverse_sdk/`** contains:
 - `client.py` - Main `LoyverseClient` class with endpoint access
+- `cli/` - Typer-based command-line interface with 8 subcommands
 - `endpoints/` - Endpoint classes using mixin pattern for CRUD operations
 - `models/` - Pydantic models for request/response validation
 - `exporters/` - Flat-file exporter for CSV and Parquet output
@@ -31,7 +33,7 @@ The SDK provides:
 uv pip install loyverse_sdk
 
 # Add as a project dependency - recommended for uv projects
-up add loyverse_sdk 
+uv add loyverse_sdk 
 
 # Install from GitHub
 uv pip install git+https://github.com/dagsdags212/loyverse_sdk.git
@@ -49,6 +51,42 @@ Or create a `.env` file in your project root:
 
 ```env
 LOYVERSE_API_TOKEN=your_api_token
+```
+
+Or set it up via the CLI:
+
+```bash
+loyverse init
+```
+
+## CLI Usage
+
+The `loyverse` CLI provides quick terminal access to the Loyverse API without writing Python code.
+
+```bash
+# List resources with output formats
+loyverse list customers --limit 10
+loyverse list receipts --created-at-min 2024-01-01 --format table
+loyverse list customers --format csv > customers.csv
+
+# Create resources
+loyverse create categories --name "Drinks" --color GREEN
+loyverse create customers --name "Jane" --email jane@acme.com
+
+# Update and delete
+loyverse update categories <ID> --name "New Name"
+loyverse delete categories <ID> --yes
+
+# Retrieve a single record
+loyverse get customers <ID>
+loyverse get receipts <ID> --format table
+
+# Export to DuckDB for analytics
+loyverse export --db-path loyverse.duckdb
+loyverse export --db-path loyverse.duckdb --resource receipts
+
+# List available endpoints
+loyverse endpoints
 ```
 
 ## Quick Start

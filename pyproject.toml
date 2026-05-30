@@ -1,6 +1,6 @@
 [project]
 name = "loyverse-sdk"
-version = "0.2.2"
+version = "0.3.0"
 description = "Asynchronous Python SDK for the Loyverse API"
 readme = "README.md"
 authors = [{ name = "dagsdags212", email = "jegsamson.dev@gmail.com" }]
@@ -26,21 +26,23 @@ dependencies = [
   "duckdb>=1.1.0",
   "polars>=1.0.0",
   "pyarrow>=15.0.0",
+  "typer>=0.15.0",
 ]
-
-[project.urls]
-Homepage = "https://github.com/dagsdags212/loyverse_sdk"
-Repository = "https://github.com/dagsdags212/loyverse_sdk"
-Issues = "https://github.com/dagsdags212/loyverse_sdk/issues"
-
-[tool.uv]
-dev-dependencies = [
+dependency-groups = [
   "anyio>=4.11.0",
   "pytest>=9.0",
   "pytest-asyncio>=1.3.0",
   "pytest-mock>=3.15.1",
   "respx>=0.22.0",
 ]
+
+[project.scripts]
+loyverse = "loyverse_sdk.cli.main:app"
+
+[project.urls]
+Homepage = "https://github.com/dagsdags212/loyverse_sdk"
+Repository = "https://github.com/dagsdags212/loyverse_sdk"
+Issues = "https://github.com/dagsdags212/loyverse_sdk/issues"
 
 [tool.uv.workspace]
 members = ["."]
